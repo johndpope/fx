@@ -1,0 +1,2 @@
+influxdb
+-e git+https://github.com/oanda/oandapy.git#egg=oandapy

@@ -1,0 +1,6 @@
+version: '3'
+services:
+  data-service:
+  mongodb-data-service:
+    ports:
+       - 27017:27017

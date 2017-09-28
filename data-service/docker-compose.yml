@@ -1,0 +1,44 @@
+version: '3'
+services:
+  data-service:
+    build: /opt/projects/fx/data-service
+    volumes:
+      - /opt/projects/fx/data-service:/code/
+      - /data-service:/data
+      - /etc/localtime:/etc/localtime
+    stdin_open: true
+    tty: true
+    environment:
+      DataPath: "/data"
+    links:
+      - influxdb
+    depends_on:
+      - influxdb
+    ports:
+      - 9000:8000
+    container_name: "data-service"
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    env_file:
+      - 'env.influxdb'
+    volumes:
+      # Data persistency
+      # sudo mkdir -p /srv/docker/influxdb/data
+      - /data-service/db:/var/lib/influxdb
+
+#
+#  mongodb-data-service:
+#    image: mongo:latest
+#    container_name: "mongodb-data-service"
+#    environment:
+#      - MONGO_DATA_DIR=/data/db
+#      - MONGO_LOG_DIR=/dev/null
+#    volumes:
+#      - /botdata/db:/data/db
+#    command: mongod
