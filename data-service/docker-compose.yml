@@ -28,17 +28,4 @@ services:
     env_file:
       - 'env.influxdb'
     volumes:
-      # Data persistency
-      # sudo mkdir -p /srv/docker/influxdb/data
       - /data-service/db:/var/lib/influxdb
-
-#
-#  mongodb-data-service:
-#    image: mongo:latest
-#    container_name: "mongodb-data-service"
-#    environment:
-#      - MONGO_DATA_DIR=/data/db
-#      - MONGO_LOG_DIR=/dev/null
-#    volumes:
-#      - /botdata/db:/data/db
-#    command: mongod

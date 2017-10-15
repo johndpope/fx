@@ -17,4 +17,4 @@ RUN pip3 install -r /requirements.txt
 # install nano
 RUN ["apt-get", "install", "-y", "nano"]
 
-ENTRYPOINT  cd /code/bot-service/botcommon && pip3 install -e . &&  cd /code/bot-service/master-bot/master-bot && python3 server.py
+ENTRYPOINT  cd /code/data-service && python3 fx.py
