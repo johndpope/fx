@@ -3,24 +3,21 @@ services:
   data-service:
     build: /opt/projects/fx/data-service
     volumes:
+      - /fx/log:/fx/logs
       - /opt/projects/fx/data-service:/code/
-      - /data-service:/data
       - /etc/localtime:/etc/localtime
     stdin_open: true
     tty: true
-    environment:
-      DataPath: "/data"
     links:
       - influxdb
     depends_on:
       - influxdb
-    ports:
-      - 9000:8000
     container_name: "data-service"
 
   influxdb:
     image: influxdb:latest
     container_name: influxdb
+    restart: always
     ports:
       - "8083:8083"
       - "8086:8086"
@@ -28,4 +25,4 @@ services:
     env_file:
       - 'env.influxdb'
     volumes:
-      - /data-service/db:/var/lib/influxdb
+      - /fx/db:/var/lib/influxdb

@@ -17,4 +17,4 @@ RUN pip3 install -r /requirements.txt
 # install nano
 RUN ["apt-get", "install", "-y", "nano"]
 
-ENTRYPOINT  cd /code/data-service && python3 fx.py
+ENTRYPOINT  cd /code/data-service && python3 get_data.py
