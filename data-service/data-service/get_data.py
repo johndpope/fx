@@ -16,13 +16,21 @@ fx_service = fx_data_service.FxDataService(pycommon.get_env_or_config('host'),
 print(pycommon.get_env_or_config('host'))
 print(pycommon.get_env_or_config('port'))
 
-while True:
+import threading
+
+
+def work():
+    threading.Timer(60, work).start()
+
     try:
 
-        time = fx_service.get_lasted_bar({'time':'2000-01-01'})['time']
+        time = fx_service.get_lasted_bar({'time': '2000-01-01'})['time']
         data = odana.get_from_odana(time, 5000)
         fx_service.push_data(data)
 
         logging.info("Success:" + time + " " + str(len(data)))
-    except:
+    except Exception as ex:
         logging.error(traceback.format_exc())
+
+
+work()

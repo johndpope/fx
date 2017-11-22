@@ -24,6 +24,7 @@ class OdanaClient:
                                  granularity='M1')  # minute bars  # 7
         candles = data['candles']
         converted = []
+
         for v in candles:
             converted.append({
                 "measurement": "ticks",
