@@ -1,12 +1,9 @@
 import json
-from oandapyV20 import API, oandapyV20
-from oandapyV20.contrib.requests import MarketOrderRequest, TakeProfitDetails, StopLossDetails
-import oandapyV20.endpoints.trades as trades
-
-from oandapyV20.exceptions import V20Error
-from oandapyV20.endpoints.pricing import PricingStream
 
 import oandapyV20.endpoints.orders as orders
+import oandapyV20.endpoints.trades as trades
+from oandapyV20 import API, oandapyV20
+from oandapyV20.contrib.requests import MarketOrderRequest
 
 accountID = "101-011-6388580-001"
 access_token = "0cd4c62c9ea093e77c2086fcc61053ed-19807c1fb8c8e289298d7f9ae3351a72"

@@ -3,7 +3,7 @@ services:
   data-service:
     build: /opt/projects/fx/data-service
     volumes:
-      - /fx/log:/fx/logs
+      - /fx/log:/logs
       - /opt/projects/fx/data-service:/code/
       - /etc/localtime:/etc/localtime
     stdin_open: true

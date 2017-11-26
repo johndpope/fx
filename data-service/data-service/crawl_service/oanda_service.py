@@ -1,26 +1,33 @@
 import datetime
 import logging
 
-import dateutil.parser
+import dateutil
 import oandapy
-import pycommon
+
+from crawl_service.crawl_service import CrawlService
+from data_service_config import DataServiceConfig
 
 
-class OdanaClient:
-    def __init__(self, token):
-        self.token = token
+class OandaCrawl(CrawlService):
+    @classmethod
+    def from_config(cls):
+        cfg = DataServiceConfig()
+        return OandaCrawl(cfg.OandaKey)
 
-    def get_from_odana(self, lasted_time, count=1, time_delta=60):
-        dt = dateutil.parser.parse(lasted_time)
+    def __init__(self, api_key):
+        self.api_key = api_key
+
+    def get(self, time, num_bars=5000, time_delta=60):
+        dt = dateutil.parser.parse(time)
         dt = dt + datetime.timedelta(seconds=time_delta)
         dt = str(dt.isoformat())
         dt = dt.replace('+00:00', 'Z')
         logging.debug("get data from odana")
 
-        oanda = oandapy.API(environment="practice", access_token=self.token)
+        oanda = oandapy.API(environment="practice", access_token=self.api_key)
         data = oanda.get_history(instrument='EUR_USD',  # our instrument
                                  start=dt,  # start data
-                                 count=count,
+                                 count=num_bars,
                                  granularity='M1')  # minute bars  # 7
         candles = data['candles']
         converted = []
@@ -43,8 +50,3 @@ class OdanaClient:
                 }
             })
         return converted
-
-#
-# client=OdanaClient(pycommon.get_env_or_config('odanakey'))
-# print(client.get_from_odana('2017-11-02T10:39:00Z'))
-# print(client.get_from_odana(str(datetime.datetime.now().utcnow().isoformat())))
