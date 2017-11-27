@@ -7,9 +7,10 @@ services:
       - /opt/projects/fx/data-service:/code/
       - /etc/localtime:/etc/localtime
     stdin_open: true
+    ports:
+      - "9000:9000"
     environment:
       host: "influxdb"
-    tty: true
     links:
       - influxdb
     depends_on:

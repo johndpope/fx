@@ -5,10 +5,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import botutil
 import cherrypy
 import pycommon
+
 from data_service_config import DataServiceConfig
+from sync import start
 from tick_store.influx_tick_store import InfluxTickStore
 
 cfg = DataServiceConfig()
@@ -22,12 +23,17 @@ print(cfg)
 
 db = InfluxTickStore.from_config()
 
+start()
+
 
 class Root:
     @cherrypy.expose
-    @botutil.decorator.auto_try_catch
     def get_count(self):
-        return db.get_count()
+        return str(db.get_count())
+
+    @cherrypy.expose
+    def get_current_value(self):
+        return str(cr.get_account('101-011-6388580-001'))
 
 
 cherrypy.tree.mount(Root(), '/', config={})

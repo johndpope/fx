@@ -1,9 +1,9 @@
 import logging
+import threading
 import traceback
 
 import pycommon
 
-#
 from crawl_service.oanda_service import OandaCrawl
 from tick_store.influx_tick_store import InfluxTickStore
 
@@ -17,8 +17,6 @@ lb.init_stream_handler(100)
 lb.build()
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-
-import threading
 
 db = InfluxTickStore.from_config()
 crawler = OandaCrawl.from_config()

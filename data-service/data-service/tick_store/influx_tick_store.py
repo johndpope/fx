@@ -18,7 +18,8 @@ class InfluxTickStore(TickStore):
         client.switch_database(self.db)
 
         rs = client.query('SELECT COUNT(closeBid) FROM ticks')
-        print(rs)
+
+        return list(rs)[0][0]['count']
 
     def __init__(self, host, port, user, password):
         self.db = 'ticks'

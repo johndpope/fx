@@ -1,9 +1,5 @@
-import json
-
-import oandapyV20.endpoints.orders as orders
-import oandapyV20.endpoints.trades as trades
-from oandapyV20 import API, oandapyV20
-from oandapyV20.contrib.requests import MarketOrderRequest
+from oandapyV20 import API
+from oandapyV20.endpoints.accounts import AccountSummary
 
 accountID = "101-011-6388580-001"
 access_token = "0cd4c62c9ea093e77c2086fcc61053ed-19807c1fb8c8e289298d7f9ae3351a72"
@@ -16,8 +12,15 @@ instruments = "EUR_USD"
 EUR_USD_STOP_LOSS = 1.07
 EUR_USD_TAKE_PROFIT = 1.10
 
+while True:
+    r = AccountSummary(accountID)
+    re=api.request(r)
+    print(re['account']['unrealizedPL'])
+    import time
+    time.sleep(5)
+exit()
 
-r = trades .OpenTrades(accountID)
+r = trades.OpenTrades(accountID)
 rv = api.request(r)
 print(rv)
 
@@ -35,9 +38,8 @@ except oandapyV20.exceptions.V20Error as err:
 else:
     print(json.dumps(rv, indent=2))
 
-
 r = orders.OrderCreate(accountID, data=mktOrder.data)
-   # perform the request
+# perform the request
 rv = api.request(r)
 print(rv)
 print(json.dumps(rv, indent=4))
