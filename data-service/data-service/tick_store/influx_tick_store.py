@@ -12,6 +12,14 @@ class InfluxTickStore(TickStore):
         cfg = DataServiceConfig()
         return InfluxTickStore(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPass)
 
+    def get_count(self):
+        client = InfluxDBClient(self.host, self.port, self.user, self.password)
+        client.create_database(self.db)
+        client.switch_database(self.db)
+
+        rs = client.query('SELECT COUNT(closeBid) FROM ticks')
+        print(rs)
+
     def __init__(self, host, port, user, password):
         self.db = 'ticks'
         self.password = password

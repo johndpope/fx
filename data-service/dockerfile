@@ -13,4 +13,4 @@ RUN pip3 install --upgrade pip
 COPY ./requirements.txt /
 RUN pip3 install -r /requirements.txt
 
-ENTRYPOINT  cd /code/data-service/ && python3 sync.py
+ENTRYPOINT  cd /code/data-service/ && python3 sync.py & python3 server.py
