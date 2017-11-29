@@ -2,37 +2,37 @@ import logging
 
 from influxdb import InfluxDBClient
 
-from data_service_config import DataServiceConfig
-from tick_store.tick_store import TickStore
+import fxservice.fxservice
+from .tick_data_service import TickDataService
 
 
-class InfluxTickStore(TickStore):
+class InfluxTickDataService(TickDataService):
     @classmethod
     def from_config(cls):
-        cfg = DataServiceConfig()
-        return InfluxTickStore(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPass)
+        cfg = fxservice.fxservice .DataServiceConfig()
+        return InfluxTickDataService(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPass, cfg.DbName)
 
-    def get_count(self):
-        client = InfluxDBClient(self.host, self.port, self.user, self.password)
-        client.create_database(self.db)
-        client.switch_database(self.db)
-
-        rs = client.query('SELECT COUNT(closeBid) FROM ticks')
-
-        return list(rs)[0][0]['count']
-
-    def __init__(self, host, port, user, password):
-        self.db = 'ticks'
+    def __init__(self, host, port, user, password, db_name):
+        self.db_name = db_name
         self.password = password
         self.user = user
         self.host = host
         self.port = port
 
+    def get_count(self):
+        client = InfluxDBClient(self.host, self.port, self.user, self.password)
+        client.create_database(self.db_name)
+        client.switch_database(self.db_name)
+
+        rs = client.query('SELECT COUNT(closeBid) FROM ticks')
+
+        return list(rs)[0][0]['count']
+
     def get_lasted_bar(self, default_value=None):
         logging.debug("Get lasted time from host")
         client = InfluxDBClient(self.host, self.port, self.user, self.password)
-        client.create_database(self.db)
-        client.switch_database(self.db)
+        client.create_database(self.db_name)
+        client.switch_database(self.db_name)
 
         rs = client.query('SELECT * FROM ticks ORDER BY DESC LIMIT 1')
         ls = list(rs)
@@ -44,7 +44,7 @@ class InfluxTickStore(TickStore):
 
     def get_bars(self, start, end):
         logging.debug("Get time from host")
-        client = InfluxDBClient(self.host, self.port, self.user, self.password, self.db)
+        client = InfluxDBClient(self.host, self.port, self.user, self.password, self.db_name)
         rs = client.query("select * from ticks where time>'{}' and time < '{}'".format(start, end))
         ls = list(rs)
         return ls[0]
@@ -52,8 +52,8 @@ class InfluxTickStore(TickStore):
     def push_data(self, candles):
         logging.debug("push data to host")
         client = InfluxDBClient(self.host, self.port, self.user, self.password)
-        client.create_database(self.db)
-        client.switch_database(self.db)
+        client.create_database(self.db_name)
+        client.switch_database(self.db_name)
         client.write_points(candles)
 
 # fx_service = FxDataService(pycommon.get_env_or_config('host'), 8086)

@@ -17,7 +17,7 @@ while True:
     re=api.request(r)
     print(re['account']['unrealizedPL'])
     import time
-    time.sleep(5)
+    time.sleep(0)
 exit()
 
 r = trades.OpenTrades(accountID)

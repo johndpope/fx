@@ -4,20 +4,20 @@ import logging
 import dateutil
 import oandapy
 
-from crawl_service.crawl_service import CrawlService
+from broker_service.broker_service import BrokerService
 from data_service_config import DataServiceConfig
 
 
-class OandaCrawl(CrawlService):
+class OandaBrokerService(BrokerService):
     @classmethod
     def from_config(cls):
         cfg = DataServiceConfig()
-        return OandaCrawl(cfg.OandaKey)
+        return OandaBrokerService(cfg.OandaKey)
 
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def get(self, time, num_bars=5000, time_delta=60):
+    def get_bar(self, time, num_bars=5000, time_delta=60):
         dt = dateutil.parser.parse(time)
         dt = dt + datetime.timedelta(seconds=time_delta)
         dt = str(dt.isoformat())

@@ -11,6 +11,7 @@ class DataServiceConfig(ConfigBase):
     DbPort = None
     DbUser = None
     DbPass = None
+    DbName = None
 
 
 DataServiceConfig().merge_file(pycommon.get_callee_path() + "/config.ini")
