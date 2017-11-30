@@ -14,9 +14,10 @@ EUR_USD_TAKE_PROFIT = 1.10
 
 while True:
     r = AccountSummary(accountID)
-    re=api.request(r)
+    re = api.request(r)
     print(re['account']['unrealizedPL'])
     import time
+
     time.sleep(0)
 exit()
 

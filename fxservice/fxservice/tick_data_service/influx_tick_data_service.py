@@ -9,7 +9,7 @@ from .tick_data_service import TickDataService
 class InfluxTickDataService(TickDataService):
     @classmethod
     def from_config(cls):
-        cfg = fxservice.fxservice .DataServiceConfig()
+        cfg = fxservice.fxservice.DataServiceConfig()
         return InfluxTickDataService(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPass, cfg.DbName)
 
     def __init__(self, host, port, user, password, db_name):
@@ -54,7 +54,7 @@ class InfluxTickDataService(TickDataService):
         client = InfluxDBClient(self.host, self.port, self.user, self.password)
         client.create_database(self.db_name)
         client.switch_database(self.db_name)
-        client.write_points(candles)
+        assert client.write_points(candles) == True
 
 # fx_service = FxDataService(pycommon.get_env_or_config('host'), 8086)
 # print(len(fx_service.get_bars('2017-08-01T10:38:00Z','2017-11-02T10:38:00Z')))

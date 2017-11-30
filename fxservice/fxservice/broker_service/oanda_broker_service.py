@@ -3,9 +3,10 @@ import logging
 
 import dateutil
 import oandapy
-
 from broker_service.broker_service import BrokerService
 from data_service_config import DataServiceConfig
+from oandapyV20 import API
+from oandapyV20.endpoints.accounts import AccountSummary
 
 
 class OandaBrokerService(BrokerService):
@@ -16,6 +17,13 @@ class OandaBrokerService(BrokerService):
 
     def __init__(self, api_key):
         self.api_key = api_key
+
+    def get_profit_loss(self, account_id):
+        access_token = "0cd4c62c9ea093e77c2086fcc61053ed-19807c1fb8c8e289298d7f9ae3351a72"
+        r = AccountSummary(account_id)
+        api = API(access_token=access_token, environment="practice")
+        re = api.request(r)
+        return re
 
     def get_bar(self, time, num_bars=5000, time_delta=60):
         dt = dateutil.parser.parse(time)
@@ -28,7 +36,7 @@ class OandaBrokerService(BrokerService):
         data = oanda.get_history(instrument='EUR_USD',  # our instrument
                                  start=dt,  # start data
                                  count=num_bars,
-                                 granularity='M1')  # minute bars  # 7
+                                 granularity='S5')  # minute bars  # 7
         candles = data['candles']
         converted = []
 

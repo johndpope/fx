@@ -7,10 +7,10 @@ from __future__ import unicode_literals
 
 import cherrypy
 import pycommon
-
 from data_service_config import DataServiceConfig
-from sync import start
-from tick_store.influx_tick_store import InfluxTickStore
+
+from fxservice.fxservice.broker_service import OandaBrokerService
+from fxservice.fxservice.tick_data_service.influx_tick_data_service import InfluxTickDataService
 
 cfg = DataServiceConfig()
 
@@ -21,22 +21,54 @@ logger.build()
 
 print(cfg)
 
-db = InfluxTickStore.from_config()
+db = InfluxTickDataService.from_config()
+br = OandaBrokerService.from_config()
 
-start()
+
+def make_response_json(method):
+    def method_make(*args, **kw):
+        import cherrypy
+        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
+        cherrypy.response.headers['Access-Control-Allow-Headers'] = 'X-Requested-With'
+        cherrypy.response.headers['Content-Type'] = "application/json"
+        return method(*args, **kw)
+
+    return method_make
+
+
+class Account:
+    @cherrypy.expose
+    def get_profit_loss(self):
+        return str(br.get_profit_loss('101-011-6388580-001'))
 
 
 class Root:
+    def index(self):
+        return "Hello, world!"
+
+    index.exposed = True
+
+
+class Data:
     @cherrypy.expose
+    @make_response_json
+    def get_bar(self, start, end):
+        return str(db.get_lasted_bar(start, end))
+
+    @cherrypy.expose
+    @make_response_json
     def get_count(self):
         return str(db.get_count())
 
     @cherrypy.expose
-    def get_current_value(self):
-        return str(cr.get_account('101-011-6388580-001'))
+    @make_response_json
+    def get_last_bar(self):
+        return str(db.get_lasted_bar())
 
 
 cherrypy.tree.mount(Root(), '/', config={})
+cherrypy.tree.mount(Data(), '/data/', config={})
+cherrypy.tree.mount(Account(), '/account/', config={})
 
 config = {
     'tools.staticdir.debug': True,
