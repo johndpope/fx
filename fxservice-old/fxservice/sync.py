@@ -2,10 +2,35 @@ import logging
 import traceback
 
 import pycommon
+
 from broker_service.oanda_broker_service import OandaBrokerService
 from tick_data_service.influx_tick_data_service import InfluxTickDataService
 
 logging.getLogger().setLevel(logging.INFO)
+
+data_service = InfluxTickDataService.from_config()
+data=data_service.get_bars('2017-01-01', '2017-01-09')
+print(len(data))
+for v in data:
+    import requests
+
+    try:
+
+        url = "http://localhost:5000/push_data"
+        import json
+
+        payload = json.dumps([v])
+        headers = {'content-type': 'application/json'}
+
+        response = requests.request("POST", url, data=payload, headers=headers)
+        print(json.loads(response.content))
+    except:
+        pass
+    import time
+
+    time.sleep(0)
+
+exit(0)
 
 
 class Sync(pycommon.patterns.Publisher):
@@ -40,7 +65,6 @@ class Sync(pycommon.patterns.Publisher):
 
             except Exception:
                 logging.error(traceback.format_exc())
-
 
 # class Test(pycommon.patterns.Subscriber):
 #     def __init__(self, name):

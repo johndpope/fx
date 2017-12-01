@@ -6,7 +6,7 @@ from pycommon import patterns
 @patterns.singleton
 class DataServiceConfig(ConfigBase):
     LogPath = '/tmp/logs'
-    OandaKey = None
+    OandaKey=None
     DbHost = None
     DbPort = None
     DbUser = None

@@ -5,15 +5,17 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import cherrypy
-import pycommon
-from data_service_config import DataServiceConfig
+import json
+import logging
 
-from fxservice.fxservice.broker_service import OandaBrokerService
+import pycommon
+from flask import Flask, request, jsonify, Response, stream_with_context
+
+from data_service_config import DataServiceConfig
 from fxservice.fxservice.tick_data_service.influx_tick_data_service import InfluxTickDataService
 
+app = Flask(__name__)
 cfg = DataServiceConfig()
-
 logger = pycommon.LogBuilder()
 logger.init_rotating_file_handler(cfg.LogPath)
 logger.init_stream_handler()
@@ -22,65 +24,63 @@ logger.build()
 print(cfg)
 
 db = InfluxTickDataService.from_config()
-br = OandaBrokerService.from_config()
 
 
-def make_response_json(method):
-    def method_make(*args, **kw):
-        import cherrypy
-        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-        cherrypy.response.headers['Access-Control-Allow-Headers'] = 'X-Requested-With'
-        cherrypy.response.headers['Content-Type'] = "application/json"
-        return method(*args, **kw)
-
-    return method_make
+@app.route('/')
+def hello_world():
+    return 'Hello from data service !'
 
 
-class Account:
-    @cherrypy.expose
-    def get_profit_loss(self):
-        return str(br.get_profit_loss('101-011-6388580-001'))
+@app.route('/get_data_stream')
+def get_data_stream():
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    def generate():
+        data = db.get_bars(start, end)
+        for item in data:
+            byte_data = json.dumps(item).encode()
+            yield byte_data
+
+    return Response(stream_with_context(generate()), mimetype='application/json')
 
 
-class Root:
-    def index(self):
-        return "Hello, world!"
-
-    index.exposed = True
-
-
-class Data:
-    @cherrypy.expose
-    @make_response_json
-    def get_bar(self, start, end):
-        return str(db.get_lasted_bar(start, end))
-
-    @cherrypy.expose
-    @make_response_json
-    def get_count(self):
-        return str(db.get_count())
-
-    @cherrypy.expose
-    @make_response_json
-    def get_last_bar(self):
-        return str(db.get_lasted_bar())
+@app.route('/get_data')
+def get_data():
+    start = request.args.get('start')
+    end = request.args.get('end')
+    print(start, end)
+    data = db.get_bars(start, end)
+    return Response(json.dumps(data), mimetype='application/json')
 
 
-cherrypy.tree.mount(Root(), '/', config={})
-cherrypy.tree.mount(Data(), '/data/', config={})
-cherrypy.tree.mount(Account(), '/account/', config={})
+@app.route('/push_data', methods=['GET', 'POST'])
+def push_data():
+    data_obj = json.loads(request.data)
+    converted = []
 
-config = {
-    'tools.staticdir.debug': True,
-    'log.screen': True,
-    'server.socket_host': '0.0.0.0',
-    'server.socket_port': 9000,
-    'tools.sessions.on': True,
-    'tools.encode.on': True,
-    'tools.encode.encoding': 'utf-8',
-    'server.thread_pool': 30,
-    'tools.encode.text_only': False,
-    'engine.autoreload.on': False
-}
-cherrypy.config.update(config)
-cherrypy.engine.start()
+    for v in data_obj:
+        converted.append({
+            "measurement": "ticks",
+            "time": v['time'],
+            "fields": {
+                'closeAsk': v['closeAsk'],
+                'closeBid': v['closeBid'],
+                'highAsk': v['highAsk'],
+                'highBid': v['highBid'],
+                'lowAsk': v['lowAsk'],
+                'lowBid': v['lowBid'],
+                'openAsk': v['openAsk'],
+                'openBid': v['openBid'],
+                'volume': v['volume'],
+                'time': v['time']
+            }
+        })
+    print(converted[0]['fields']['time'])
+    logging.debug("added len: {}".format(len(data_obj)))
+    db.push_data(converted)
+    return jsonify({"added": len(data_obj)})
+
+
+if __name__ == '__main__':
+    app.run(threaded=True)
