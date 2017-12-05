@@ -1,0 +1,11 @@
+version: '3'
+services:
+  oanda_crawler:
+    build: .
+    volumes:
+      - /fx/oanda_data/log:/logs
+      - /opt/projects/fx/oanda_data/oanda_data:/code/
+    stdin_open: true
+    environment:
+      host: "172.104.110.189"
+    container_name: "oanda_crawler"

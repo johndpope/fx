@@ -1,9 +1,11 @@
 import logging
 
-from .config import *
+from data_service_config import *
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger().setLevel(logging.INFO)
+
+import pycommon
 
 lb = pycommon.LogBuilder()
 

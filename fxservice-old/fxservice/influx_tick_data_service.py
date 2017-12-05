@@ -1,20 +1,19 @@
 import logging
 
-import pycommon
-from config import DataServiceConfig
 from influxdb import InfluxDBClient
 
-from .tick_data_service import TickDataService
+from tick_data_service import TickDataService
+
+from data_service_config import DataServiceConfig
 
 
-class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
+class InfluxTickDataService(TickDataService):
     @classmethod
     def from_config(cls):
         cfg = DataServiceConfig()
-        return InfluxTickDataService(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPass, cfg.DbName)
+        return InfluxTickDataService(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPass, 'ticks')
 
     def __init__(self, host, port, user, password, db_name):
-        pycommon.patterns.Publisher.__init__(self, ['added'])
         self.db_name = db_name
         self.password = password
         self.user = user
@@ -53,33 +52,10 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
 
     def push_data(self, candles):
         logging.debug("push data to host")
-
-        converted = []
-
-        for v in candles:
-            converted.append({
-                "measurement": "ticks",
-                "time": v['time'],
-                "fields": {
-                    'closeAsk': v['closeAsk'],
-                    'closeBid': v['closeBid'],
-                    'highAsk': v['highAsk'],
-                    'highBid': v['highBid'],
-                    'lowAsk': v['lowAsk'],
-                    'lowBid': v['lowBid'],
-                    'openAsk': v['openAsk'],
-                    'openBid': v['openBid'],
-                    'volume': v['volume'],
-                    'time': v['time']
-                }
-            })
-        print(converted[0]['fields']['time'])
-
         client = InfluxDBClient(self.host, self.port, self.user, self.password)
         client.create_database(self.db_name)
         client.switch_database(self.db_name)
-        assert client.write_points(converted) is True
-        super().dispatch('added', candles)
+        assert client.write_points(candles) == True
 
 # fx_service = FxDataService(pycommon.get_env_or_config('host'), 8086)
 # print(len(fx_service.get_bars('2017-08-01T10:38:00Z','2017-11-02T10:38:00Z')))

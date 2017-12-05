@@ -3,7 +3,7 @@ import logging
 
 import dateutil
 import oandapy
-from broker_service.broker_service import BrokerService
+from broker_service import BrokerService
 from data_service_config import DataServiceConfig
 from oandapyV20 import API
 from oandapyV20.endpoints.accounts import AccountSummary

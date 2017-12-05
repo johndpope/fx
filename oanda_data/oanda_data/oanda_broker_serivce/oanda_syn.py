@@ -4,47 +4,16 @@ import traceback
 import pycommon
 
 from oanda_broker_service import OandaBrokerService
-from influx_tick_data_service import InfluxTickDataService
-
-logging.getLogger().setLevel(logging.INFO)
-
-data_service = InfluxTickDataService.from_config()
-data=data_service.get_bars('2017-01-01', '2017-01-09')
-print(len(data))
-for v in data:
-    import requests
-
-    try:
-
-        url = "http://localhost:9000/push_data"
-        import json
-
-        payload = json.dumps([v])
-        headers = {'content-type': 'application/json'}
-
-        response = requests.request("POST", url, data=payload, headers=headers)
-        print(json.loads(response.content))
-
-    except:
-        print(traceback.format_exc())
-        pass
-    import time
-
-    time.sleep(3)
-
-exit(0)
 
 
-class Sync(pycommon.patterns.Publisher):
+class OandaSync(pycommon.patterns.Publisher):
     @classmethod
     def default(cls):
-        data_service = InfluxTickDataService.from_config()
         broker_service = OandaBrokerService.from_config()
-        return Sync(data_service, broker_service)
+        return OandaSync(broker_service)
 
-    def __init__(self, data_service, broker_service):
-        super(Sync, self).__init__(['tick', 'added'])
-        self.data_service = data_service
+    def __init__(self, broker_service):
+        super(OandaSync, self).__init__(['tick', 'added'])
         self.broker_service = broker_service
 
     def start(self):

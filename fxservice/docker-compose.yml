@@ -1,11 +1,10 @@
 version: '3'
 services:
-  data-service:
-    build: /opt/projects/fx/data-service
+  fxservice:
+    build: .
     volumes:
-      - /fx/log:/logs
-      - /opt/projects/fx/data-service:/code/
-      - /etc/localtime:/etc/localtime
+      - /fx/fxservice/log:/logs
+      - /opt/projects/fx/fxservice/fxservice:/code/
     stdin_open: true
     ports:
       - "9000:9000"
