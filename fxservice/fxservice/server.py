@@ -55,7 +55,7 @@ def push_data():
 
     logging.debug("added len: {}".format(len(data_obj)))
     db.push_data(data_obj)
-    return jsonify({"added": len(data_obj)})
+    return jsonify({"added": len(data_obj['candles'])})
 
 
 candle_factory = CandleFactory("EUR_USD", "M1")
@@ -65,35 +65,35 @@ candle_factory = CandleFactory("EUR_USD", "M1")
 def push_tick():
     data_obj = json.loads(request.data)
     if data_obj['type'] != 'PRICE':
-        return jsonify( {"status": "success"})
+        return jsonify({"status": "success"})
 
     print(data_obj)
 
-    new_obj = {"tick": {"ask": data_obj['asks'][0]['price'], "instrument": data_obj['instrument'], "bid":  data_obj['bids'][0]['price'],
+    new_obj = {"tick": {"ask": data_obj['asks'][0]['price'], "instrument": data_obj['instrument'],
+                        "bid": data_obj['bids'][0]['price'],
                         "time": data_obj['time']}}
 
     r = candle_factory.processTick(StreamRecord(new_obj))
 
-
-
+    #
     # if r is not None:
-        # db.push_data(
-        # {
-        #     'closeAsk': 1,
-        #     'closeBid': 2,
-        #
-        #     'highAsk': 3,
-        #     'highBid': 3,
-        #
-        #     'lowAsk': 4,
-        #     'lowBid': 5,
-        #
-        #     'openAsk': 6,
-        #     'openBid': 6,
-        #
-        #     'volume': 6,
-        #     # 'time':
-        # })
+    #     db.push_data(
+    #     {
+    #         'closeAsk': 1,
+    #         'closeBid': 2,
+    #
+    #         'highAsk': 3,
+    #         'highBid': 3,
+    #
+    #         'lowAsk': 4,
+    #         'lowBid': 5,
+    #
+    #         'openAsk': 6,
+    #         'openBid': 6,
+    #
+    #         'volume': 6,
+    #         # 'time':
+    #     })
 
     return jsonify({"status": "success"})
 
@@ -130,6 +130,20 @@ def get_data_stream():
             yield byte_data
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
+
+@app.route('/get_lasted_bar')
+def get_lasted_bar():
+    lasted = db.get_lasted_bar()
+    if lasted is None:
+        return jsonify({})
+    return jsonify(lasted)
+
+
+@app.route('/get_count')
+def get_count():
+    data = db.get_count()
+    return Response(json.dumps({"count": data}), mimetype='application/json')
 
 
 @app.route('/get_data')

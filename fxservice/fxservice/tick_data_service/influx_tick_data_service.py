@@ -26,7 +26,7 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
         client.create_database(self.db_name)
         client.switch_database(self.db_name)
 
-        rs = client.query('SELECT COUNT(closeBid) FROM ticks')
+        rs = client.query('SELECT COUNT(closeBid) FROM {}'.format(self.db_name))
 
         return list(rs)[0][0]['count']
 
@@ -36,7 +36,7 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
         client.create_database(self.db_name)
         client.switch_database(self.db_name)
 
-        rs = client.query('SELECT * FROM ticks ORDER BY DESC LIMIT 1')
+        rs = client.query('SELECT * FROM {} ORDER BY DESC LIMIT 1'.format(self.db_name))
         ls = list(rs)
         result = default_value
         if len(ls) > 0:
@@ -47,7 +47,7 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
     def get_bars(self, start, end):
         logging.debug("Get time from host")
         client = InfluxDBClient(self.host, self.port, self.user, self.password, self.db_name)
-        rs = client.query("select * from ticks where time>'{}' and time < '{}'".format(start, end))
+        rs = client.query("select * from {} where time>'{}' and time < '{}'".format(self.db_name,start, end))
         ls = list(rs)
         return ls[0]
 
@@ -56,19 +56,15 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
 
         converted = []
 
-        for v in candles:
+        for v in candles['candles']:
             converted.append({
-                "measurement": "ticks",
+                "measurement": DataServiceConfig().DbName,
                 "time": v['time'],
                 "fields": {
-                    'closeAsk': v['closeAsk'],
-                    'closeBid': v['closeBid'],
-                    'highAsk': v['highAsk'],
-                    'highBid': v['highBid'],
-                    'lowAsk': v['lowAsk'],
-                    'lowBid': v['lowBid'],
-                    'openAsk': v['openAsk'],
-                    'openBid': v['openBid'],
+                    'closeBid': v['bid']['c'],
+                    'highBid': v['bid']['h'],
+                    'lowBid':v['bid']['l'],
+                    'openBid': v['bid']['o'],
                     'volume': v['volume'],
                     'time': v['time']
                 }

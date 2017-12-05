@@ -1,4 +1,4 @@
 flask
 influxdb
--e git+https://github.com/oanda/oandapy.git#egg=oandapy
+oandapyV20
 -e git+https://github.com/ASC689561/pycommon.git#egg=pycommon

@@ -6,4 +6,4 @@ RUN apk add --no-cache bash git
 COPY ./requirements.txt /
 RUN pip3 install -r /requirements.txt
 
-ENTRYPOINT  cd /code/ &&  python3 server.py
+ENTRYPOINT  cd /code/ &&  python3 oanda_syn.py
