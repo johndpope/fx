@@ -1,7 +1,7 @@
 import logging
 
 import pycommon
-from config import DataServiceConfig
+
 from influxdb import InfluxDBClient
 
 from .tick_data_service import TickDataService
@@ -10,6 +10,7 @@ from .tick_data_service import TickDataService
 class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
     @classmethod
     def from_config(cls):
+        from config import DataServiceConfig
         cfg = DataServiceConfig()
         return InfluxTickDataService(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPass, cfg.DbName)
 
@@ -27,6 +28,11 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
         client.switch_database(self.db_name)
 
         rs = client.query('SELECT COUNT(closeBid) FROM {}'.format(self.db_name))
+
+        data=list(rs)
+
+        if len(data)==0 or len(data[0])==0 or 'count' not in data[0][0]:
+            return 0
 
         return list(rs)[0][0]['count']
 
@@ -47,7 +53,7 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
     def get_bars(self, start, end):
         logging.debug("Get time from host")
         client = InfluxDBClient(self.host, self.port, self.user, self.password, self.db_name)
-        rs = client.query("select * from {} where time>'{}' and time < '{}'".format(self.db_name,start, end))
+        rs = client.query("select * from {} where time>'{}' and time < '{}'".format(self.db_name, start, end))
         ls = list(rs)
         return ls[0]
 
@@ -58,12 +64,12 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
 
         for v in candles['candles']:
             converted.append({
-                "measurement": DataServiceConfig().DbName,
+                "measurement": self.db_name,
                 "time": v['time'],
                 "fields": {
                     'closeBid': v['bid']['c'],
                     'highBid': v['bid']['h'],
-                    'lowBid':v['bid']['l'],
+                    'lowBid': v['bid']['l'],
                     'openBid': v['bid']['o'],
                     'volume': v['volume'],
                     'time': v['time']

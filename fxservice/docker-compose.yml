@@ -6,6 +6,8 @@ services:
       - /fx/fxservice/log:/logs
       - /opt/projects/fx/fxservice/fxservice:/code/
     stdin_open: true
+    restart: always
+
     ports:
       - "9000:9000"
     environment:

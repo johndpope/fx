@@ -12,11 +12,13 @@ from oandapyV20 import API
 
 cfg = Config()
 
+logging.getLogger("urllib3").setLevel(logging.ERROR)
+
 logger = pycommon.LogBuilder()
 logger.init_rotating_file_handler(cfg.LogPath)
 logger.init_stream_handler()
 logger.build()
-logging.info('cfg:'+str(cfg))
+logging.info('cfg:' + str(cfg))
 
 
 class OandaSync:
@@ -36,6 +38,7 @@ class OandaSync:
                 if len(data) > 0:
                     self.push_function(data)
                     time = self.get_lasted_function()
+                    print(time)
 
 
             except Exception:
@@ -45,7 +48,7 @@ class OandaSync:
 def get_lasted():
     try:
         import requests
-        url = "http://localhost:9000/get_lasted_bar"
+        url = Config().DataService + "/get_lasted_bar"
         response = requests.request("GET", url)
         obj = json.loads(response.text)
         logging.debug("get lasted: {}".format(obj['time']))
@@ -55,7 +58,7 @@ def get_lasted():
         dt = dt + datetime.timedelta(seconds=60)
         dt = str(dt.isoformat())
         dt = dt.replace('+00:00', 'Z')
-        logging.debug('lasted time:'+str(dt))
+        logging.debug('lasted time:' + str(dt))
         return dt
     except:
         return '2000-01-01T00:00:00Z'
