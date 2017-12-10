@@ -75,31 +75,7 @@ def push_tick():
 
     r = candle_factory.processTick(StreamRecord(new_obj))
 
-    #
-    # if r is not None:
-    #     db.push_data(
-    #     {
-    #         'closeAsk': 1,
-    #         'closeBid': 2,
-    #
-    #         'highAsk': 3,
-    #         'highBid': 3,
-    #
-    #         'lowAsk': 4,
-    #         'lowBid': 5,
-    #
-    #         'openAsk': 6,
-    #         'openBid': 6,
-    #
-    #         'volume': 6,
-    #         # 'time':
-    #     })
-
     return jsonify({"status": "success"})
-
-    # logging.debug("added len: {}".format(len(data_obj)))
-    # db.push_data(data_obj)
-    # return jsonify({"added": len(data_obj)})
 
 
 @app.route('/data_stream')
@@ -114,6 +90,8 @@ def data_stream():
 def get_data_stream():
     start = request.args.get('start')
     end = request.args.get('end')
+    print(start, end)
+
     chunk = int(request.args.get('chunk', 1))
 
     def generate():
@@ -132,6 +110,16 @@ def get_data_stream():
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 
+@app.route('/get_data')
+def get_data():
+    start = request.args.get('start')
+    end = request.args.get('end')
+    print(start, end)
+    data = db.get_bars(start, end)
+    return Response(json.dumps(data), mimetype='application/json')
+
+
+
 @app.route('/get_lasted_bar')
 def get_lasted_bar():
     lasted = db.get_lasted_bar()
@@ -144,15 +132,6 @@ def get_lasted_bar():
 def get_count():
     data = db.get_count()
     return Response(json.dumps({"count": data}), mimetype='application/json')
-
-
-@app.route('/get_data')
-def get_data():
-    start = request.args.get('start')
-    end = request.args.get('end')
-    print(start, end)
-    data = db.get_bars(start, end)
-    return Response(json.dumps(data), mimetype='application/json')
 
 
 if __name__ == '__main__':

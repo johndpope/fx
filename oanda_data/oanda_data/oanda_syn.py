@@ -34,15 +34,18 @@ class OandaSync:
             logging.debug('Get data')
             try:
                 data = self.get_data_function(time, self.batch)
-                print(len(data))
-                if len(data) > 0:
+                print(len(data['candles']))
+                if len(data['candles']) > 0:
                     self.push_function(data)
                     time = self.get_lasted_function()
                     print(time)
-
-
+                else:
+                    import time
+                    time.sleep(30)
             except Exception:
                 logging.error(traceback.format_exc())
+                import time
+                time.sleep(30)
 
 
 def get_lasted():

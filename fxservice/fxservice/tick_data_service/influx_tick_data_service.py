@@ -1,7 +1,6 @@
 import logging
 
 import pycommon
-
 from influxdb import InfluxDBClient
 
 from .tick_data_service import TickDataService
@@ -22,6 +21,10 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
         self.host = host
         self.port = port
 
+    def reset(self):
+        client = InfluxDBClient(self.host, self.port, self.user, self.password)
+        client.drop_database(self.db_name)
+
     def get_count(self):
         client = InfluxDBClient(self.host, self.port, self.user, self.password)
         client.create_database(self.db_name)
@@ -29,9 +32,9 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
 
         rs = client.query('SELECT COUNT(closeBid) FROM {}'.format(self.db_name))
 
-        data=list(rs)
+        data = list(rs)
 
-        if len(data)==0 or len(data[0])==0 or 'count' not in data[0][0]:
+        if len(data) == 0 or len(data[0]) == 0 or 'count' not in data[0][0]:
             return 0
 
         return list(rs)[0][0]['count']

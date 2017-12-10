@@ -6,19 +6,21 @@ from pytest_bdd import given, then, scenario, parsers
 from fxservice.fxservice.tick_data_service.influx_tick_data_service import *
 
 
-@scenario('influx_tick_data_service.feature', 'Tạo service với db mới thì dữ liệu là mặc định')
-def test_publish34():
+@scenario('influx_tick_data_service.feature', 'Tạo service với db mới và thêm dữ liệu thì thêm đúng')
+def test1():
     pass
 
 
-@scenario('influx_tick_data_service.feature', 'Tạo service với db mới và thêm dữ liệu thì thêm đúng')
-def test_publish1():
+@scenario('influx_tick_data_service.feature', 'Tạo service với db mới thì dữ liệu là mặc định')
+def test2():
     pass
 
 
 @given("Tạo service test với db mới")
 def tao_service():
-    return InfluxTickDataService('localhost', 8086, 'root', 'root', 'test_bdd')
+    data= InfluxTickDataService('localhost', 8086, 'root', 'root', 'test_bdd')
+    data.reset()
+    return data
 
 
 @then(parsers.parse("Kiểm tra count bằng {count:d}"))
