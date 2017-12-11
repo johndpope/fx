@@ -29,16 +29,16 @@ class OandaSync:
         self.batch = batch_size
 
     def start(self):
-        time = self.get_lasted_function()
+        lasted_time = self.get_lasted_function()
         while True:
             logging.debug('Get data')
             try:
-                data = self.get_data_function(time, self.batch)
+                data = self.get_data_function(lasted_time, self.batch)
                 print(len(data['candles']))
                 if len(data['candles']) > 0:
                     self.push_function(data)
-                    time = self.get_lasted_function()
-                    print(time)
+                    lasted_time = self.get_lasted_function()
+                    print(lasted_time)
                 else:
                     import time
                     time.sleep(30)
