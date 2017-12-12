@@ -3,16 +3,17 @@ import json
 import requests
 
 
+def _stream_request(response):
+    lines = response.iter_lines()
+    for line in lines:
+        if line:
+            data = json.loads(line.decode("utf-8"))
+            yield data
+
+
 class API:
     def __init__(self, service):
         self.service = service
-
-    def __stream_request(self, response):
-        lines = response.iter_lines()
-        for line in lines:
-            if line:
-                data = json.loads(line.decode("utf-8"))
-                yield data
 
     def request(self, request):
         url = self.service + "/" + request.endpoint
@@ -25,7 +26,7 @@ class API:
         else:
             response = requests.request(request.method, url, data=request.body, headers=request.headers,
                                         params=request.query, stream=True)
-            return self.__stream_request(response)
+            return _stream_request(response)
 
 #
 # client = API('http://172.104.110.189:9000')
