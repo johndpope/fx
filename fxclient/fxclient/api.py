@@ -1,6 +1,7 @@
 import json
 
 import requests
+from diskcache import FanoutCache
 
 
 def _stream_request(response):
@@ -11,10 +12,14 @@ def _stream_request(response):
             yield data
 
 
+cache = FanoutCache('/tmp/diskcache/fanoutcache')
+
+
 class API:
     def __init__(self, service):
         self.service = service
 
+    @cache.memoize(typed=True, expire=10000, tag='fib')
     def request(self, request):
         url = self.service + "/" + request.endpoint
 

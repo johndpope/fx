@@ -8,15 +8,23 @@ import datetime as dt
 
 import backtrader.feed as feed
 from backtrader import date2num
+from fxclient.fxclient.api import API
+from fxclient.fxclient.get_data_request import GetDataRequest
 
 
-class DataSource(feed.DataBase):
+class TestDataSource(feed.DataBase):
+
     def __init__(self, data):
-
         self.data = iter(data)
 
+    @classmethod
+    def download_from_service(cls, service, start, end):
+        client = API(service)
+        data = client.request(GetDataRequest(start, end))
+        return TestDataSource(data)
+
     def start(self):
-        super(DataSource, self).start()
+        super(TestDataSource, self).start()
 
     def _load(self):
         try:

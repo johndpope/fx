@@ -4,18 +4,14 @@ import backtrader as bt
 class TestStrategy(bt.Strategy):
 
     def log(self, txt, dt=None):
-        ''' Logging function fot this strategy'''
         dt = dt or self.datas[0].datetime.date(0)
         print('%s, %s' % (dt.isoformat(), txt))
 
     def __init__(self):
-        # Keep a reference to the "close" line in the data[0] dataseries
         self.dataclose = self.datas[0].close
-
-        # To keep track of pending orders and buy price/commission
         self.order = None
         self.buyprice = None
-        self.buycomm = None
+        self.buycomm = 5000
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -76,7 +72,7 @@ class TestStrategy(bt.Strategy):
                     self.log('BUY CREATE, %.2f' % self.dataclose[0])
 
                     # Keep track of the created order to avoid a 2nd order
-                    self.order = self.buy()
+                    self.order = self.buy(size=500)
 
         else:
 
@@ -86,4 +82,4 @@ class TestStrategy(bt.Strategy):
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
                 # Keep track of the created order to avoid a 2nd order
-                self.order = self.sell()
+                self.order = self.sell(size=500)
