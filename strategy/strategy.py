@@ -1,4 +1,67 @@
+import json
+import logging
+
 import backtrader as bt
+from oandapyV20 import API, V20Error
+from oandapyV20.endpoints import orders, positions
+
+accountID, access_token = '101-011-6388580-003', 'c59ac783885ec75d0b147e730f820997-17fc99e689f2edb65ecb07060a914e71'
+lasted_trade = None
+logger = logging.getLogger(__name__)
+
+
+def close():
+    logger.info("Close existing positions ...")
+    r = positions.PositionDetails(accountID=accountID,
+                                  instrument='EUR_USD')
+    api = API(access_token=access_token)
+
+    try:
+        openPos = api.request(r)
+
+    except V20Error as e:
+        logger.error("V20Error: %s", e)
+
+    else:
+        toClose = {}
+        for P in ["long", "short"]:
+            if openPos["position"][P]["units"] != "0":
+                toClose.update({"{}Units".format(P): "ALL"})
+
+        logger.info("prepare to close: {}".format(json.dumps(toClose)))
+        r = positions.PositionClose(accountID=accountID,
+                                    instrument="EUR_USD",
+                                    data=toClose)
+        rv = None
+        try:
+            if toClose:
+                rv = api.request(r)
+                logger.info("close: response: %s",
+                            json.dumps(rv, indent=2))
+
+        except V20Error as e:
+            logger.error("V20Error: %s", e)
+
+
+def by_test():
+    api = API(access_token=access_token)
+    r = orders.OrderCreate(accountID=accountID, data={
+        "order": {
+            "units": "100",
+            "instrument": "EUR_USD",
+            "timeInForce": "FOK",
+            "type": "MARKET",
+            "positionFill": "DEFAULT"
+        }
+    })
+    response = api.request(r)
+    print(response)
+
+
+# by_test()
+# import time
+# time.sleep(10)
+# close()
 
 
 class TestStrategy(bt.Strategy):
@@ -12,6 +75,7 @@ class TestStrategy(bt.Strategy):
         self.order = None
         self.buyprice = None
         self.buycomm = 5000
+        self.c = True
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -27,6 +91,7 @@ class TestStrategy(bt.Strategy):
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
+                self.by_test()
 
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
@@ -51,6 +116,14 @@ class TestStrategy(bt.Strategy):
                  (trade.pnl, trade.pnlcomm))
 
     def next(self):
+
+        if self.c:
+            by_test()
+        else:
+            close()
+        self.c=not self.c
+        return
+
         # Simply log the closing price of the series from the reference
         self.log('Close, %.2f' % self.dataclose[0])
 
