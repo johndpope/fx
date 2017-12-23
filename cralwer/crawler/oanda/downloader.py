@@ -5,7 +5,7 @@ import re
 import oandapyV20.endpoints.instruments as instruments
 
 
-class CandleGetter:
+class Downloader:
     def __init__(self, api, accountID):
         self._accountID = accountID
         self.api = api
@@ -50,7 +50,6 @@ class CandleGetter:
             rv = self.api.request(r)
             return rv
 
-#
 # cfg = Config()
 #
 # m = Main(api=API(access_token=cfg.OandaKey), accountID=cfg.AccountId)

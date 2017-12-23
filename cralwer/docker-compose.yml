@@ -1,13 +1,13 @@
 version: '3'
 services:
-  oanda_crawler:
+  crawler:
     build: .
     volumes:
       - /fx/oanda_data/log:/logs
-      - /opt/projects/fx/oanda_data/oanda_data:/code/
+      - /opt/projects/fx/cralwer/crawler/oanda:/code/
     stdin_open: true
     restart: always
-
     environment:
+      StartTime: "2000-01-01T00:00:00Z"
       DataService : "http://172.104.110.189:9000"
-    container_name: "oanda_crawler"
+    container_name: "crawler"

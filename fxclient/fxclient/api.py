@@ -15,13 +15,13 @@ def _stream_request(response):
 # cache = FanoutCache('/tmp/diskcache/fanoutcache')
 
 
-class API:
+class FxAPI:
     def __init__(self, service):
         self.service = service
 
     # @cache.memoize(typed=True, expire=10000, tag='fib')
     def request(self, request):
-        url = self.service + "/" + request.endpoint
+        url = self.service +  request.endpoint
 
         if not request.stream:
             response = requests.request(request.method, url, data=request.body, headers=request.headers,

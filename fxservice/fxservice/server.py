@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import json
 import logging
-import queue
 
 import pycommon
+from client_streaming import ClientStreaming
 from config import DataServiceConfig
 from flask import Flask, request, jsonify, Response, stream_with_context
-from stream import CandleFactory, StreamRecord
 from tick_data_service.influx_tick_data_service import InfluxTickDataService
 
 app = Flask(__name__)
@@ -27,72 +22,48 @@ print(cfg)
 db = InfluxTickDataService.from_config()
 
 
-class ClientStreaming(pycommon.patterns.Subscriber):
-    def __init__(self):
-        self.q = queue.Queue()
-        self.name = 'Streaming client'
-        print('Streaming client registered')
-
-    def update(self, message):
-        print('{} got message "{}"'.format(self.name, message))
-        self.q.put(message)
-
-    def start(self):
-        while True:
-            data = self.q.get()
-            byte_data = (json.dumps(data) + "\n").encode()
-            yield byte_data
-
-
 @app.route('/')
 def hello_world():
     return 'Hello from data service !'
 
 
-@app.route('/push_data', methods=['POST'])
-def push_data():
+@app.route('/candles', methods=['POST'])
+def post_candles():
     data_obj = json.loads(request.data)
-
     logging.debug("added len: {}".format(len(data_obj)))
     db.push_data(data_obj)
     return jsonify({"added": len(data_obj['candles'])})
 
 
-candle_factory = CandleFactory("EUR_USD", "M1")
-
-
-@app.route('/push_tick', methods=['POST'])
-def push_tick():
-    data_obj = json.loads(request.data)
-    if data_obj['type'] != 'PRICE':
-        return jsonify({"status": "success"})
-
-    print(data_obj)
-
-    new_obj = {"tick": {"ask": data_obj['asks'][0]['price'], "instrument": data_obj['instrument'],
-                        "bid": data_obj['bids'][0]['price'],
-                        "time": data_obj['time']}}
-
-    r = candle_factory.processTick(StreamRecord(new_obj))
-
-    return jsonify({"status": "success"})
-
-
-@app.route('/data_stream')
-def data_stream():
+@app.route('/candles/stream', methods=['GET'])
+def stream_candle():
+    logging.debug("Stream")
     client = ClientStreaming()
     db.register('added', client)
-
     return Response(stream_with_context(client.start()), mimetype='text/event-stream')
 
 
-@app.route('/get_data_stream')
-def get_data_stream():
+@app.route('/candles/lasted', methods=['GET'])
+def get_candles_lasted():
+    lasted = db.get_lasted_bar()
+    if lasted is None:
+        return jsonify({})
+    return jsonify(lasted)
+
+
+@app.route('/candles/count', methods=['GET'])
+def get_candles_count():
+    data = db.get_count()
+    return Response(json.dumps({"count": data}), mimetype='application/json')
+
+
+@app.route('/candles', methods=['GET'])
+def get_candles():
     start = request.args.get('start')
     end = request.args.get('end')
-    print(start, end)
-
     chunk = int(request.args.get('chunk', 1))
+
+    logging.debug("Get candles from {} to {} chunk {}".format(start, end, chunk))
 
     def generate():
         data = db.get_bars(start, end)
@@ -108,30 +79,6 @@ def get_data_stream():
             yield byte_data
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
-
-
-@app.route('/get_data')
-def get_data():
-    start = request.args.get('start')
-    end = request.args.get('end')
-    print(start, end)
-    data = db.get_bars(start, end)
-    return Response(json.dumps(data), mimetype='application/json')
-
-
-
-@app.route('/get_lasted_bar')
-def get_lasted_bar():
-    lasted = db.get_lasted_bar()
-    if lasted is None:
-        return jsonify({})
-    return jsonify(lasted)
-
-
-@app.route('/get_count')
-def get_count():
-    data = db.get_count()
-    return Response(json.dumps({"count": data}), mimetype='application/json')
 
 
 if __name__ == '__main__':

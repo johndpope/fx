@@ -1,5 +1,4 @@
 FROM python:alpine3.6
-MAINTAINER [nbhoa]
 ENV LANG=C.UTF-8
 
 RUN apk add --no-cache bash git

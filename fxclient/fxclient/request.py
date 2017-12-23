@@ -17,9 +17,9 @@ class Request:
         self.headers[key] = value
 
     def set_body(self, value):
-        if value is str:
+        if isinstance(value, str):
             self.body = value
-        elif value is dict:
+        elif isinstance(value, dict):
             self.body = json.dumps(value)
         else:
             raise Exception("Unknown body")

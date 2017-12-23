@@ -5,10 +5,13 @@ import traceback
 
 import dateutil.parser
 import pycommon
-import requests
 from config import Config
-from oanda_broker_serivce.get_candle import CandleGetter
+from fxclient.fxclient.endpoints.get_lasted_candle_request import GetLastedCandlesRequest
+from fxclient.fxclient.api import FxAPI
+from fxclient.fxclient.endpoints.post_candles import PostCandlesRequest
 from oandapyV20 import API
+
+from cralwer.crawler.oanda.downloader import Downloader
 
 cfg = Config()
 
@@ -50,12 +53,11 @@ class OandaSync:
 
 def get_lasted():
     try:
-        import requests
-        url = Config().DataService + "/get_lasted_bar"
-        response = requests.request("GET", url)
-        obj = json.loads(response.text)
-        logging.debug("get lasted: {}".format(obj['time']))
-        time = obj['time']
+
+        url = cfg.DataService
+        api = FxAPI(url)
+        response = api.request(GetLastedCandlesRequest())
+        time = response['time']
 
         dt = dateutil.parser.parse(time)
         dt = dt + datetime.timedelta(seconds=60)
@@ -64,23 +66,19 @@ def get_lasted():
         logging.debug('lasted time:' + str(dt))
         return dt
     except:
-        return '2000-01-01T00:00:00Z'
+        print(traceback.format_exc())
+        return '2017-01-01T00:00:00Z'
 
 
 def push(data):
-    url = Config().DataService + "/push_data"
-    import json
-
-    payload = json.dumps(data)
-    headers = {'content-type': 'application/json'}
-
-    response = requests.request("POST", url, data=payload, headers=headers)
-    print(json.loads(response.content))
+    url = cfg.DataService
+    api = FxAPI(url)
+    response = api.request(PostCandlesRequest(data))
+    print(response)
 
 
 def get_data(time, count):
-    cfg = Config()
-    candle_getter = CandleGetter(api=API(access_token=cfg.OandaKey), accountID=cfg.AccountId)
+    candle_getter = Downloader(api=API(access_token=cfg.OandaKey), accountID=cfg.AccountId)
     candle_getter.get_by_start_and_count(time, count)
     data = candle_getter.get_data()
     logging.debug("get data: len {}".format(len(data['candles'])))
