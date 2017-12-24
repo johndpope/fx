@@ -1,3 +1,5 @@
+import logging
+
 import pycommon
 from pycommon import ConfigBase
 from pycommon import patterns
@@ -9,9 +11,9 @@ class Config(ConfigBase):
     OandaKey = None
     AccountId = None
     DataService = None
-    BatchSize=None
+    BatchSize = None
 
 
 Config().merge_file(pycommon.get_callee_path() + "/config.ini")
 Config().merge_env()
-print(Config())
+logging.debug(Config())

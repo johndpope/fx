@@ -8,4 +8,4 @@ url = 'http://localhost:9000/get_data_stream?chunk={2}&start={0}&end={1}'.format
 response = requests.get(url, stream=True)
 for chunk in response.iter_lines():
     if chunk:
-        print(chunk)
+        logging.debug(chunk)

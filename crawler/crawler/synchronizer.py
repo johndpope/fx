@@ -1,21 +1,21 @@
 import datetime
-import json
 import logging
 import traceback
 
 import dateutil.parser
 import pycommon
 from config import Config
-from fxclient.fxclient.endpoints.get_lasted_candle_request import GetLastedCandlesRequest
-from fxclient.fxclient.api import FxAPI
-from fxclient.fxclient.endpoints.post_candles import PostCandlesRequest
+from fxclient.fxapi import FxAPI
+from fxclient.endpoints.get_lasted_candle_request import GetLastedCandlesRequest
+from fxclient.endpoints.post_candles import PostCandlesRequest
 from oandapyV20 import API
 
-from cralwer.crawler.oanda.downloader import Downloader
+from oanda.downloader import Downloader
 
 cfg = Config()
 
-logging.getLogger("urllib3").setLevel(logging.ERROR)
+logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
+logging.getLogger("oandapyV20.oandapyV20").setLevel(logging.ERROR)
 
 logger = pycommon.LogBuilder()
 logger.init_rotating_file_handler(cfg.LogPath)
@@ -37,18 +37,18 @@ class OandaSync:
             logging.debug('Get data')
             try:
                 data = self.get_data_function(lasted_time, self.batch)
-                print(len(data['candles']))
+                logging.debug(len(data['candles']))
                 if len(data['candles']) > 0:
                     self.push_function(data)
                     lasted_time = self.get_lasted_function()
-                    print(lasted_time)
+                    logging.debug(lasted_time)
                 else:
                     import time
                     time.sleep(30)
             except Exception:
                 logging.error(traceback.format_exc())
                 import time
-                time.sleep(30)
+                time.sleep(5)
 
 
 def get_lasted():
@@ -66,15 +66,15 @@ def get_lasted():
         logging.debug('lasted time:' + str(dt))
         return dt
     except:
-        print(traceback.format_exc())
-        return '2017-01-01T00:00:00Z'
+        logging.error(traceback.format_exc())
+        return '2000-01-01T00:00:00Z'
 
 
 def push(data):
     url = cfg.DataService
     api = FxAPI(url)
     response = api.request(PostCandlesRequest(data))
-    print(response)
+    logging.debug(response)
 
 
 def get_data(time, count):

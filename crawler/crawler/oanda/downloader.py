@@ -54,4 +54,4 @@ class Downloader:
 #
 # m = Main(api=API(access_token=cfg.OandaKey), accountID=cfg.AccountId)
 # m.get_by_start_and_count('2005-02-01T00:00:00Z', 1)
-# print(m.get_data())
+# logging.debug(m.get_data())

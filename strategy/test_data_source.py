@@ -5,11 +5,12 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import datetime as dt
+import logging
 
 import backtrader.feed as feed
 from backtrader import date2num
 
-from fxclient.fxclient.api import API
+from fxclient.fxclient.fxapi import API
 from fxclient.fxclient.get_data_request import GetDataStreamRequest
 
 
@@ -30,10 +31,10 @@ class TestDataSource(feed.DataBase):
 
         try:
             bar = next(self.temp_arr)
-            print(bar['time'])
+            logging.debug(bar['time'])
         except StopIteration:
             try:
-                print('fetch from service')
+                logging.debug('fetch from service')
                 self.temp_arr = iter(next(self.generator))
                 bar = next(self.temp_arr)
             except StopIteration:

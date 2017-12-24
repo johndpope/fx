@@ -14,7 +14,7 @@
 # s = PricingStream(accountID=accountID, params={"instruments": instruments})
 #
 # for R in api.request(s):
-#     print(R)
+#     logging.debug(R)
 #     import requests
 #
 #     try:
@@ -26,8 +26,8 @@
 #         headers = {'content-type': 'application/json'}
 #
 #         response = requests.request("POST", url, data=payload, headers=headers)
-#         print(json.loads(response.content))
+#         logging.debug(json.loads(response.content))
 #
 #     except:
-#         print(traceback.format_exc())
+#         logging.debug(traceback.format_exc())
 #         pass

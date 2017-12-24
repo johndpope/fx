@@ -8,7 +8,7 @@ import datetime as dt
 
 import backtrader.feed as feed
 from backtrader import date2num
-from fxclient.fxclient.api import API
+from fxclient.fxclient.fxapi import API
 from fxclient.fxclient.get_data_request import GetDataRequest
 
 

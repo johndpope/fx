@@ -15,7 +15,7 @@
 #                                      password='root',
 #                                      db_name='ticks')
 # data = data_service.get_bars('2017-01-01', '2017-01-09')
-# print(len(data))
+# logging.debug(len(data))
 # for v in data:
 #     import requests
 #
@@ -28,10 +28,10 @@
 #         headers = {'content-type': 'application/json'}
 #
 #         response = requests.request("POST", url, data=payload, headers=headers)
-#         print(json.loads(response.content))
+#         logging.debug(json.loads(response.content))
 #
 #     except:
-#         print(traceback.format_exc())
+#         logging.debug(traceback.format_exc())
 #         pass
 #     import time
 #

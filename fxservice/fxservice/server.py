@@ -17,7 +17,7 @@ logger.init_rotating_file_handler(cfg.LogPath)
 logger.init_stream_handler()
 logger.build()
 
-print(cfg)
+logging.debug(cfg)
 
 db = InfluxTickDataService.from_config()
 

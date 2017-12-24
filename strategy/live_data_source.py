@@ -8,7 +8,7 @@ import datetime as dt
 
 import backtrader.feed as feed
 from backtrader import date2num
-from fxclient.fxclient.api import API
+from fxclient.fxclient.fxapi import API
 from fxclient.fxclient.data_stream_request import StreamDataRequest
 
 
@@ -33,7 +33,7 @@ class LiveDataSource(feed.DataBase):
     def _load(self):
         bar = next(self.generator)['candles'][0]
 
-        print(bar)
+        logging.debug(bar)
         if bar:
             bar['time'] = bar['time'].replace('.000000000', '')
             self.l.datetime[0] = date2num(dt.datetime.strptime(bar['time'], '%Y-%m-%dT%H:%M:%SZ'))

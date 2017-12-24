@@ -7,7 +7,8 @@ services:
       - /opt/projects/fx/fxservice/fxservice:/code/
     stdin_open: true
     restart: always
-
+    env_file:
+      - /opt/projects/fx/fxservice/fxservice/config.ini
     ports:
       - "9000:9000"
     environment:
@@ -16,7 +17,7 @@ services:
       - influxdb
     depends_on:
       - influxdb
-    container_name: "data-service"
+    container_name: "fxservice"
 
   influxdb:
     image: influxdb:latest

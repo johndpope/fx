@@ -7,7 +7,7 @@ class GetCandlesRequest(Request):
     """
     client = API('http://172.104.110.189:9000')
     for v in client.request(GetDataRequest('2017-08-01T10:38:00Z', "2017-08-02T10:38:00Z")):
-        print(v)
+        logging.debug(v)
     """
 
     def __init__(self, start_time, end_time, chunk=4):

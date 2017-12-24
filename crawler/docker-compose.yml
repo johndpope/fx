@@ -1,0 +1,18 @@
+version: '3'
+services:
+  crawler:
+    build: .
+    volumes:
+      - /fx/oanda_data/log:/logs
+      - /opt/projects/fx:/code/
+    stdin_open: true
+    restart: always
+    env_file:
+      - crawler/config.ini
+    container_name: "crawler"
+
+
+networks:
+  default:
+    external:
+      name: fxservice_default

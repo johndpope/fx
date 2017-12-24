@@ -30,7 +30,7 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
         client.create_database(self.db_name)
         client.switch_database(self.db_name)
 
-        rs = client.query('SELECT COUNT(closeBid) FROM {}'.format(self.db_name))
+        rs = client.query('SELECT COUNT(volume) FROM {}'.format(self.db_name))
 
         data = list(rs)
 
@@ -66,19 +66,26 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
         converted = []
 
         for v in candles['candles']:
+            v.pop('complete')
+
             converted.append({
                 "measurement": self.db_name,
                 "time": v['time'],
                 "fields": {
-                    'closeBid': v['bid']['c'],
-                    'highBid': v['bid']['h'],
-                    'lowBid': v['bid']['l'],
-                    'openBid': v['bid']['o'],
-                    'volume': v['volume'],
-                    'time': v['time']
+                    "volume": v['volume'],
+
+                    "bid_o": v['bid']['o'],
+                    "bid_c": v['bid']['c'],
+                    "bid_h": v['bid']['h'],
+                    "bid_l": v['bid']['l'],
+
+                    "ask_o": v['ask']['o'],
+                    "ask_c": v['ask']['c'],
+                    "ask_h": v['ask']['h'],
+                    "ask_l": v['ask']['l']
                 }
             })
-        print(converted[0]['fields']['time'])
+        logging.debug(converted[0]['time'])
 
         client = InfluxDBClient(self.host, self.port, self.user, self.password)
         client.create_database(self.db_name)
@@ -87,6 +94,6 @@ class InfluxTickDataService(TickDataService, pycommon.patterns.Publisher):
         super().dispatch('added', candles)
 
 # fx_service = FxDataService(pycommon.get_env_or_config('host'), 8086)
-# print(len(fx_service.get_bars('2017-08-01T10:38:00Z','2017-11-02T10:38:00Z')))
-# print(fx_service.get_lasted_bar(None))
-# print(len(fx_service.get_bars('2000-01-01T10:38:00Z','2017-11-02T10:38:00Z')))
+# logging.debug(len(fx_service.get_bars('2017-08-01T10:38:00Z','2017-11-02T10:38:00Z')))
+# logging.debug(fx_service.get_lasted_bar(None))
+# logging.debug(len(fx_service.get_bars('2000-01-01T10:38:00Z','2017-11-02T10:38:00Z')))

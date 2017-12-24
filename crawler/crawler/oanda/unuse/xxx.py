@@ -15,4 +15,4 @@ utc=utc.replace(tzinfo=from_zone)
 # # Convert time zone
 central = utc.astimezone(to_zone)
 
-print(central)
+logging.debug(central)
