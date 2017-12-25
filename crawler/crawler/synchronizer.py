@@ -67,7 +67,7 @@ def get_lasted():
         return dt
     except:
         logging.error(traceback.format_exc())
-        return '2000-01-01T00:00:00Z'
+        return '2010-01-01T00:00:00Z'
 
 
 def push(data):

@@ -1,4 +1,4 @@
-from fxclient.fxclient.endpoint import endpoint
+from .endpoint import endpoint
 from fxclient.fxclient.request import Request
 
 

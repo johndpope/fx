@@ -91,7 +91,7 @@ class TestStrategy(bt.Strategy):
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
-                self.by_test()
+                # self.by_test()
 
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
@@ -117,12 +117,12 @@ class TestStrategy(bt.Strategy):
 
     def next(self):
 
-        if self.c:
-            by_test()
-        else:
-            close()
-        self.c=not self.c
-        return
+        # if self.c:
+        #     by_test()
+        # else:
+        #     close()
+        # self.c=not self.c
+        # return
 
         # Simply log the closing price of the series from the reference
         self.log('Close, %.2f' % self.dataclose[0])
