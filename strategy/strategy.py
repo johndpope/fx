@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def close():
+    print("Close existing positions ...")
     logger.info("Close existing positions ...")
     r = positions.PositionDetails(accountID=accountID,
                                   instrument='EUR_USD')
@@ -44,7 +45,9 @@ def close():
 
 
 def by_test():
+    print("by test")
     api = API(access_token=access_token)
+
     r = orders.OrderCreate(accountID=accountID, data={
         "order": {
             "units": "100",
@@ -121,7 +124,7 @@ class TestStrategy(bt.Strategy):
             by_test()
         else:
             close()
-        self.c=not self.c
+        self.c = not self.c
         return
 
         # Simply log the closing price of the series from the reference
