@@ -12,7 +12,7 @@ class ClientStreaming(pycommon.patterns.Subscriber):
         logging.debug('Streaming client registered')
 
     def update(self, message):
-        # logging.debug('{} got message "{}"'.format(self.name, message))
+        logging.debug('{} got message "{}"'.format(self.name, message))
         self.q.put(message)
 
     def start(self):

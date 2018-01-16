@@ -5,7 +5,7 @@ import backtrader as bt
 from oandapyV20 import API, V20Error
 from oandapyV20.endpoints import orders, positions
 
-accountID, access_token = '101-011-6388580-003', 'c59ac783885ec75d0b147e730f820997-17fc99e689f2edb65ecb07060a914e71'
+accountID, access_token = '101-011-6388580-002', 'c59ac783885ec75d0b147e730f820997-17fc99e689f2edb65ecb07060a914e71'
 lasted_trade = None
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class TestStrategy(bt.Strategy):
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
-                # self.by_test()
+                self.by_test()
 
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
@@ -117,12 +117,12 @@ class TestStrategy(bt.Strategy):
 
     def next(self):
 
-        # if self.c:
-        #     by_test()
-        # else:
-        #     close()
-        # self.c=not self.c
-        # return
+        if self.c:
+            by_test()
+        else:
+            close()
+        self.c=not self.c
+        return
 
         # Simply log the closing price of the series from the reference
         self.log('Close, %.2f' % self.dataclose[0])
