@@ -1,14 +1,12 @@
- version: '3'
+version: '3'
 services:
   fxservice:
     build: .
     volumes:
-      - /fx/fxservice/log:/logs
       - /opt/projects/fx/fxservice/fxservice:/code/
-    stdin_open: true
-    restart: always
     env_file:
-      - /opt/projects/fx/fxservice/fxservice/config.ini
+      - /opt/projects/fx/env.env
+    restart: always
     ports:
       - "9000:9000"
     environment:

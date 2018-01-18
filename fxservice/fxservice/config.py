@@ -5,7 +5,6 @@ from pycommon import patterns
 
 @patterns.singleton
 class DataServiceConfig(ConfigBase):
-    LogPath = '/tmp/logs'
     DbHost = None
     DbPort = None
     DbUser = None
@@ -13,4 +12,5 @@ class DataServiceConfig(ConfigBase):
     DbName = None
 
 
-DataServiceConfig().merge_file(pycommon.get_callee_path() + "/config.ini")
+config = DataServiceConfig()
+print(config)

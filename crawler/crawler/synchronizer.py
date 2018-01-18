@@ -1,10 +1,14 @@
 import datetime
+import json
 import logging
 import traceback
 
 import dateutil.parser
+import os
 import pycommon
 from config import Config
+from kazoo.client import KazooClient
+
 from fxclient.fxapi import FxAPI
 from fxclient.endpoints.get_lasted_candle_request import GetLastedCandlesRequest
 from fxclient.endpoints.post_candles import PostCandlesRequest
@@ -12,10 +16,22 @@ from oandapyV20 import API
 
 from oanda.downloader import Downloader
 
-cfg = Config()
-
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
 logging.getLogger("oandapyV20.oandapyV20").setLevel(logging.ERROR)
+
+config_path = os.path.join(os.environ['ConfigBasePath'], "crawler")
+zk = KazooClient(hosts=os.environ['ConfigServer'])
+zk.start()
+zk.ensure_path(config_path)
+
+cfg = Config()
+
+
+@zk.DataWatch(config_path)
+def watch_node(data, stat):
+    dic = json.loads(data.decode("utf-8"))
+    cfg.from_dic(dic)
+
 
 logger = pycommon.LogBuilder()
 logger.init_rotating_file_handler(cfg.LogPath)

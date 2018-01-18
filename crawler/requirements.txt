@@ -2,3 +2,4 @@ flask
 influxdb
 oandapyV20
 -e git+https://github.com/ASC689561/pycommon.git#egg=pycommon
+kazoo

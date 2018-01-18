@@ -4,22 +4,54 @@
 import json
 import logging
 
+import os
+import threading
+
 import pycommon
+import sys
 from client_streaming import ClientStreaming
 from config import DataServiceConfig
 from flask import Flask, request, jsonify, Response, stream_with_context
+from kazoo.client import KazooClient
 from tick_data_service.influx_tick_data_service import InfluxTickDataService
 
-app = Flask(__name__)
 cfg = DataServiceConfig()
 logger = pycommon.LogBuilder()
-logger.init_rotating_file_handler(cfg.LogPath)
+logger.init_rotating_file_handler("/var/log/fxservice/")
 logger.init_stream_handler()
 logger.build()
 
 logging.debug(cfg)
 
+config_path = os.path.join(os.environ['ConfigBasePath'], "fxservice")
+zk = KazooClient(hosts=os.environ['ConfigServer'])
+zk.start()
+zk.ensure_path(config_path)
+
+sleepEvent = threading.Event()
+
+
+@zk.DataWatch(config_path)
+def watch_node(data, stat):
+    print(sleepEvent.is_set())
+    if sleepEvent.is_set():
+        print('----------------------')
+        try:
+            request.environ.get('werkzeug.server.shutdown')()
+        except:
+            import traceback
+            print(traceback.format_exc())
+            pass
+    dic = json.loads(data.decode("utf-8"))
+    cfg.from_dic(dic)
+    sleepEvent.set()
+
+
+sleepEvent.wait()
+
+cfg = DataServiceConfig()
 db = InfluxTickDataService.from_config()
+app = Flask(__name__)
 
 
 @app.route('/')

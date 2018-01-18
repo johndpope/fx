@@ -13,7 +13,10 @@ class Config(ConfigBase):
     DataService = None
     BatchSize = None
 
+    def from_dic(self, dic):
+        super().from_dic(dic)
+        super().merge_env()
 
-Config().merge_file(pycommon.get_callee_path() + "/config.ini")
-Config().merge_env()
-logging.debug(Config())
+
+cfg = Config()
+print(cfg)
