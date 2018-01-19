@@ -1,37 +1,49 @@
 import datetime
 import json
 import logging
+import os
+import signal
+import threading
 import traceback
 
 import dateutil.parser
-import os
 import pycommon
 from config import Config
-from kazoo.client import KazooClient
-
-from fxclient.fxapi import FxAPI
 from fxclient.endpoints.get_lasted_candle_request import GetLastedCandlesRequest
 from fxclient.endpoints.post_candles import PostCandlesRequest
-from oandapyV20 import API
-
+from fxclient.fxapi import FxAPI
+from kazoo.client import KazooClient
 from oanda.downloader import Downloader
+from oandapyV20 import API
+import time
 
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
 logging.getLogger("oandapyV20.oandapyV20").setLevel(logging.ERROR)
+
+cfg = Config()
 
 config_path = os.path.join(os.environ['ConfigBasePath'], "crawler")
 zk = KazooClient(hosts=os.environ['ConfigServer'])
 zk.start()
 zk.ensure_path(config_path)
 
-cfg = Config()
+monitor_path = os.path.join(os.environ['ConfigBasePath'], 'monitor/crawler')
+zk.create(monitor_path, b'', ephemeral=True, makepath=True)
+
+sleepEvent = threading.Event()
 
 
 @zk.DataWatch(config_path)
 def watch_node(data, stat):
+    if sleepEvent.is_set():
+        logging.warning("Restart fxservice")
+        os.kill(os.getpid(), signal.SIGTERM)
     dic = json.loads(data.decode("utf-8"))
     cfg.from_dic(dic)
+    sleepEvent.set()
 
+
+sleepEvent.wait()
 
 logger = pycommon.LogBuilder()
 logger.init_rotating_file_handler(cfg.LogPath)
@@ -41,7 +53,8 @@ logging.info('cfg:' + str(cfg))
 
 
 class OandaSync:
-    def __init__(self, get_data_function, get_lasted_function, push_function, batch_size):
+    def __init__(self, get_data_function, get_lasted_function, push_function, batch_size, delay_time):
+        self.delay_time = delay_time
         self.get_data_function = get_data_function
         self.get_lasted_function = get_lasted_function
         self.push_function = push_function
@@ -51,6 +64,9 @@ class OandaSync:
         lasted_time = self.get_lasted_function()
         while True:
             logging.debug('Get data')
+
+            if self.delay_time != 0:
+                time.sleep(self.delay_time)
             try:
                 data = self.get_data_function(lasted_time, self.batch)
                 logging.debug(len(data['candles']))
@@ -59,11 +75,9 @@ class OandaSync:
                     lasted_time = self.get_lasted_function()
                     logging.debug(lasted_time)
                 else:
-                    import time
                     time.sleep(30)
             except Exception:
                 logging.error(traceback.format_exc())
-                import time
                 time.sleep(5)
 
 
@@ -101,5 +115,5 @@ def get_data(time, count):
     return data
 
 
-s = OandaSync(get_data, get_lasted, push, cfg.BatchSize)
+s = OandaSync(get_data, get_lasted, push, cfg.BatchSize, cfg.DelayTime)
 s.start()

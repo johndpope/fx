@@ -3,12 +3,12 @@
 
 import json
 import logging
-
 import os
+import signal
 import threading
 
 import pycommon
-import sys
+import time
 from client_streaming import ClientStreaming
 from config import DataServiceConfig
 from flask import Flask, request, jsonify, Response, stream_with_context
@@ -28,20 +28,31 @@ zk = KazooClient(hosts=os.environ['ConfigServer'])
 zk.start()
 zk.ensure_path(config_path)
 
+monitor_path = os.path.join(os.environ['ConfigBasePath'], 'monitor/fxservice')
+zk.create(monitor_path, b'', ephemeral=True, makepath=True)
+
 sleepEvent = threading.Event()
+
+
+def heartbeat():
+    while True:
+        time.sleep(5)
+        import datetime
+        zk.set(monitor_path, str(datetime.datetime.now()).encode())
+        # all of my code
+
+
+t = threading.Thread(target=heartbeat, args=())
+t.start()
+print('started')
 
 
 @zk.DataWatch(config_path)
 def watch_node(data, stat):
     print(sleepEvent.is_set())
     if sleepEvent.is_set():
-        print('----------------------')
-        try:
-            request.environ.get('werkzeug.server.shutdown')()
-        except:
-            import traceback
-            print(traceback.format_exc())
-            pass
+        logging.warning("Restart fxservice")
+        os.kill(os.getpid(), signal.SIGTERM)
     dic = json.loads(data.decode("utf-8"))
     cfg.from_dic(dic)
     sleepEvent.set()
