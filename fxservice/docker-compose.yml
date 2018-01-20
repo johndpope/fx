@@ -4,6 +4,7 @@ services:
     build: .
     volumes:
       - /opt/projects/fx/fxservice/fxservice:/code/
+      - /etc/localtime:/etc/localtime
     env_file:
       - /opt/projects/fx/env.env
     restart: always
@@ -21,10 +22,10 @@ services:
     image: influxdb:latest
     container_name: influxdb
     restart: always
-    ports:
-      - "8083:8083"
-      - "8086:8086"
-      - "8090:8090"
+#    ports:
+#      - "8083:8083"
+#      - "8086:8086"
+#      - "8090:8090"
     env_file:
       - 'env.influxdb'
     volumes:

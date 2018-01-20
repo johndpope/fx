@@ -16,51 +16,56 @@ from kazoo.client import KazooClient
 from tick_data_service.influx_tick_data_service import InfluxTickDataService
 
 cfg = DataServiceConfig()
-logger = pycommon.LogBuilder()
-logger.init_rotating_file_handler("/var/log/fxservice/")
-logger.init_stream_handler()
-logger.build()
-
-logging.debug(cfg)
-
-config_path = os.path.join(os.environ['ConfigBasePath'], "fxservice")
-zk = KazooClient(hosts=os.environ['ConfigServer'])
-zk.start()
-zk.ensure_path(config_path)
-
-monitor_path = os.path.join(os.environ['ConfigBasePath'], 'monitor/fxservice')
-zk.create(monitor_path, b'', ephemeral=True, makepath=True)
-
 sleepEvent = threading.Event()
 
 
-def heartbeat():
-    while True:
-        time.sleep(5)
-        import datetime
-        zk.set(monitor_path, str(datetime.datetime.now()).encode())
-        # all of my code
+def disable_log():
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
+    logging.getLogger("oandapyV20.oandapyV20").setLevel(logging.ERROR)
+    logging.getLogger("kazoo.client").setLevel(logging.ERROR)
 
 
-t = threading.Thread(target=heartbeat, args=())
-t.start()
-print('started')
+def init_zk_config():
+    zk = KazooClient(hosts=os.environ['ZkServer'])
+    zk.start()
+
+    monitor_path = os.path.join(os.environ['ZkBasePath'], 'monitor/fxservice')
+    zk.create(monitor_path, b'', ephemeral=True, makepath=True)
+
+    @zk.DataWatch(os.path.join(os.environ['ZkBasePath'], "crawler"))
+    def watch_node(data, stat):
+        if sleepEvent.is_set():
+            logging.warning("Restart fxservice")
+            os.kill(os.getpid(), signal.SIGTERM)
+        dic = json.loads(data.decode("utf-8"))
+        cfg.from_dic(dic)
+        sleepEvent.set()
+
+    def heartbeat():
+        while True:
+            time.sleep(5)
+            import datetime
+            zk.set(monitor_path, str(datetime.datetime.now()).encode())
+            # all of my code
+
+    t = threading.Thread(target=heartbeat, args=())
+    t.start()
 
 
-@zk.DataWatch(config_path)
-def watch_node(data, stat):
-    print(sleepEvent.is_set())
-    if sleepEvent.is_set():
-        logging.warning("Restart fxservice")
-        os.kill(os.getpid(), signal.SIGTERM)
-    dic = json.loads(data.decode("utf-8"))
-    cfg.from_dic(dic)
-    sleepEvent.set()
+def init_log():
+    logger = pycommon.LogBuilder()
+    logger.init_rotating_file_handler("/var/log/fxservice")
+    logger.init_stream_handler()
+    logger.build()
+    logging.info('cfg:' + str(cfg))
 
+
+disable_log()
+init_zk_config()
+init_log()
 
 sleepEvent.wait()
 
-cfg = DataServiceConfig()
 db = InfluxTickDataService.from_config()
 app = Flask(__name__)
 

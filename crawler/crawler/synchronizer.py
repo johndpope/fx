@@ -17,39 +17,57 @@ from oanda.downloader import Downloader
 from oandapyV20 import API
 import time
 
-logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
-logging.getLogger("oandapyV20.oandapyV20").setLevel(logging.ERROR)
-
 cfg = Config()
-
-config_path = os.path.join(os.environ['ConfigBasePath'], "crawler")
-zk = KazooClient(hosts=os.environ['ConfigServer'])
-zk.start()
-zk.ensure_path(config_path)
-
-monitor_path = os.path.join(os.environ['ConfigBasePath'], 'monitor/crawler')
-zk.create(monitor_path, b'', ephemeral=True, makepath=True)
-
 sleepEvent = threading.Event()
 
 
-@zk.DataWatch(config_path)
-def watch_node(data, stat):
-    if sleepEvent.is_set():
-        logging.warning("Restart fxservice")
-        os.kill(os.getpid(), signal.SIGTERM)
-    dic = json.loads(data.decode("utf-8"))
-    cfg.from_dic(dic)
-    sleepEvent.set()
+def disable_log():
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
+    logging.getLogger("oandapyV20.oandapyV20").setLevel(logging.ERROR)
+    logging.getLogger("kazoo.client").setLevel(logging.ERROR)
 
 
+
+def init_zk_config():
+    zk = KazooClient(hosts=os.environ['ZkServer'])
+    zk.start()
+
+    monitor_path = os.path.join(os.environ['ZkBasePath'], 'monitor/crawler')
+    zk.create(monitor_path, b'', ephemeral=True, makepath=True)
+
+    @zk.DataWatch(os.path.join(os.environ['ZkBasePath'], "crawler"))
+    def watch_node(data, stat):
+        logging.error("*********************************")
+        if sleepEvent.is_set():
+            logging.warning("Restart fxservice")
+            os.kill(os.getpid(), signal.SIGTERM)
+        dic = json.loads(data.decode("utf-8"))
+        cfg.from_dic(dic)
+        sleepEvent.set()
+
+    def heartbeat():
+        while True:
+            time.sleep(5)
+            import datetime
+            zk.set(monitor_path, str(datetime.datetime.now()).encode())
+            # all of my code
+
+    t = threading.Thread(target=heartbeat, args=())
+    t.start()
+
+
+def init_log():
+    logger = pycommon.LogBuilder()
+    logger.init_rotating_file_handler(cfg.LogPath)
+    logger.init_stream_handler()
+    logger.build()
+    logging.info('cfg:' + str(cfg))
+
+
+disable_log()
+init_zk_config()
 sleepEvent.wait()
-
-logger = pycommon.LogBuilder()
-logger.init_rotating_file_handler(cfg.LogPath)
-logger.init_stream_handler()
-logger.build()
-logging.info('cfg:' + str(cfg))
+init_log()
 
 
 class OandaSync:

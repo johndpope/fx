@@ -5,9 +5,8 @@ services:
     env_file:
       - /opt/projects/fx/env.env
     volumes:
-      - /fx/oanda_data/log:/logs
+      - /etc/localtime:/etc/localtime
       - /opt/projects/fx:/code/
-    stdin_open: true
     restart: always
     container_name: "crawler"
 
