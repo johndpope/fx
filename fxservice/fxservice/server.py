@@ -32,7 +32,7 @@ def init_zk_config():
     monitor_path = os.path.join(os.environ['ZkBasePath'], 'monitor/fxservice')
     zk.create(monitor_path, b'', ephemeral=True, makepath=True)
 
-    @zk.DataWatch(os.path.join(os.environ['ZkBasePath'], "crawler"))
+    @zk.DataWatch(os.path.join(os.environ['ZkBasePath'], "fxservice"))
     def watch_node(data, stat):
         if sleepEvent.is_set():
             logging.warning("Restart fxservice")
