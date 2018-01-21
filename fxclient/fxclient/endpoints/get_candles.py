@@ -1,5 +1,5 @@
-from fxclient.fxclient.endpoint import endpoint
-from fxclient.fxclient.request import Request
+from .endpoint import endpoint
+from ..request import Request
 
 
 @endpoint(url='/candles', method='GET', stream=True)

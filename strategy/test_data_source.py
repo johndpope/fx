@@ -10,16 +10,16 @@ import logging
 import backtrader.feed as feed
 from backtrader import date2num
 
-from fxclient.fxclient.fxapi import  FxAPI
-from fxclient.fxclient.get_data_request import GetDataStreamRequest
+from fxclient.fxapi import FxAPI
+from fxclient.endpoints.get_candles import GetCandlesRequest
 
 
 class TestDataSource(feed.DataBase):
 
     def __init__(self, start, end):
         self.temp_arr = iter([])
-        self.client = API('http://172.104.110.189:9000')
-        self.generator = self.client.request(GetDataStreamRequest(start, end, chunk=1000))
+        self.client = FxAPI('http://172.104.110.189:9000')
+        self.generator = self.client.request(GetCandlesRequest(start, end, chunk=1000))
 
     def start(self):
         super(TestDataSource, self).start()
@@ -32,6 +32,7 @@ class TestDataSource(feed.DataBase):
         try:
             bar = next(self.temp_arr)
             logging.debug(bar['time'])
+            print("get data")
         except StopIteration:
             try:
                 logging.debug('fetch from service')
@@ -42,9 +43,10 @@ class TestDataSource(feed.DataBase):
 
         self.l.datetime[0] = date2num(dt.datetime.strptime(bar['time'], '%Y-%m-%dT%H:%M:%SZ'))
 
-        self.l.open[0] = (float(bar['openBid']))
-        self.l.high[0] = float(bar['highBid'])
-        self.l.low[0] = float(bar['lowBid'])
-        self.l.close[0] = float(bar['closeBid'])
+        self.l.open[0] = (float(bar['bid_o']))
+        self.l.high[0] = float(bar['bid_h'])
+        self.l.low[0] = float(bar['bid_l'])
+        self.l.close[0] = float(bar['bid_c'])
         self.l.volume[0] = float(bar['volume'])
+
         return True
