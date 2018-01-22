@@ -13,6 +13,7 @@ def set(path, data):
         zk.delete(path)
     zk.create(path, json.dumps(data, indent=4).encode(), makepath=True)
 
+#test amend 1
 
 set('/{}/fxservice'.format(root_path),
     {
