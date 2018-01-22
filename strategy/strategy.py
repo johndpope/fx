@@ -1,77 +1,25 @@
-import json
 import logging
 
 import backtrader as bt
-from oandapyV20 import API, V20Error
-from oandapyV20.endpoints import orders, positions
+import pycommon
 
 accountID, access_token = '101-011-6388580-002', 'c59ac783885ec75d0b147e730f820997-17fc99e689f2edb65ecb07060a914e71'
-lasted_trade = None
-logger = logging.getLogger(__name__)
 
 
-def close():
-    print("Close existing positions ...")
-    logger.info("Close existing positions ...")
-    r = positions.PositionDetails(accountID=accountID,
-                                  instrument='EUR_USD')
-    api = API(access_token=access_token)
-
-    try:
-        openPos = api.request(r)
-
-    except V20Error as e:
-        logger.error("V20Error: %s", e)
-
-    else:
-        toClose = {}
-        for P in ["long", "short"]:
-            if openPos["position"][P]["units"] != "0":
-                toClose.update({"{}Units".format(P): "ALL"})
-
-        logger.info("prepare to close: {}".format(json.dumps(toClose)))
-        r = positions.PositionClose(accountID=accountID,
-                                    instrument="EUR_USD",
-                                    data=toClose)
-        rv = None
-        try:
-            if toClose:
-                rv = api.request(r)
-                logger.info("close: response: %s",
-                            json.dumps(rv, indent=2))
-
-        except V20Error as e:
-            logger.error("V20Error: %s", e)
+def init_log():
+    logger = pycommon.LogBuilder()
+    logger.init_stream_handler()
+    logger.build()
 
 
-def by_test():
-    print("by test")
-    api = API(access_token=access_token)
-
-    r = orders.OrderCreate(accountID=accountID, data={
-        "order": {
-            "units": "100",
-            "instrument": "EUR_USD",
-            "timeInForce": "FOK",
-            "type": "MARKET",
-            "positionFill": "DEFAULT"
-        }
-    })
-    response = api.request(r)
-    logging.debug(response)
-
-
-# by_test()
-# import time
-# time.sleep(10)
-# close()
+init_log()
 
 
 class TestStrategy(bt.Strategy):
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.date(0)
-        logging.debug('%s, %s' % (dt.isoformat(), txt))
+        logging.info('%s, %s' % (dt, txt))
 
     def __init__(self):
         self.dataclose = self.datas[0].close
@@ -89,20 +37,13 @@ class TestStrategy(bt.Strategy):
         # Attention: broker could reject order if not enougth cash
         if order.status in [order.Completed]:
             if order.isbuy():
-                self.log(
-                    'BUY EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
-                    (order.executed.price,
-                     order.executed.value,
-                     order.executed.comm))
-                # self.by_test()
-
+                self.log('BUY EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' % (
+                    order.executed.price, order.executed.value, order.executed.comm))
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             else:  # Sell
-                self.log('SELL EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
-                         (order.executed.price,
-                          order.executed.value,
-                          order.executed.comm))
+                self.log('SELL EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' % (
+                    order.executed.price, order.executed.value, order.executed.comm))
 
             self.bar_executed = len(self)
 
@@ -115,21 +56,9 @@ class TestStrategy(bt.Strategy):
         if not trade.isclosed:
             return
 
-        self.log('OPERATION PROFIT, GROSS %.2f, NET %.2f' %
-                 (trade.pnl, trade.pnlcomm))
+        self.log('OPERATION PROFIT, GROSS %.2f, NET %.2f' % (trade.pnl, trade.pnlcomm))
 
     def next(self):
-
-        # if self.c:
-        #     by_test()
-        # else:
-        #     close()
-        # self.c = not self.c
-        # return
-
-        # Simply log the closing price of the series from the reference
-        self.log('Close, %.2f' % self.dataclose[0])
-
         # Check if an order is pending ... if yes, we cannot send a 2nd one
         if self.order:
             return
@@ -159,3 +88,56 @@ class TestStrategy(bt.Strategy):
 
                 # Keep track of the created order to avoid a 2nd order
                 self.order = self.sell(size=500)
+
+# from oandapyV20 import API, V20Error
+# from oandapyV20.endpoints import orders, positions
+#
+# def close():
+#     print("Close existing positions ...")
+#     logger.info("Close existing positions ...")
+#     r = positions.PositionDetails(accountID=accountID,
+#                                   instrument='EUR_USD')
+#     api = API(access_token=access_token)
+#
+#     try:
+#         openPos = api.request(r)
+#
+#     except V20Error as e:
+#         logger.error("V20Error: %s", e)
+#
+#     else:
+#         toClose = {}
+#         for P in ["long", "short"]:
+#             if openPos["position"][P]["units"] != "0":
+#                 toClose.update({"{}Units".format(P): "ALL"})
+#
+#         logger.info("prepare to close: {}".format(json.dumps(toClose)))
+#         r = positions.PositionClose(accountID=accountID,
+#                                     instrument="EUR_USD",
+#                                     data=toClose)
+#         rv = None
+#         try:
+#             if toClose:
+#                 rv = api.request(r)
+#                 logger.info("close: response: %s",
+#                             json.dumps(rv, indent=2))
+#
+#         except V20Error as e:
+#             logger.error("V20Error: %s", e)
+#
+#
+# def by_test():
+#     print("by test")
+#     api = API(access_token=access_token)
+#
+#     r = orders.OrderCreate(accountID=accountID, data={
+#         "order": {
+#             "units": "100",
+#             "instrument": "EUR_USD",
+#             "timeInForce": "FOK",
+#             "type": "MARKET",
+#             "positionFill": "DEFAULT"
+#         }
+#     })
+#     response = api.request(r)
+#     logging.debug(response)
