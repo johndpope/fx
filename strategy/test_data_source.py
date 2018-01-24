@@ -35,7 +35,6 @@ class TestDataSourceList(feed.DataBase):
 
         try:
             bar = next(self.temp_arr)
-            logging.debug(bar['time'])
         except StopIteration:
             return False
 
@@ -67,7 +66,6 @@ class TestDataSource(feed.DataBase):
 
         try:
             bar = next(self.temp_arr)
-            logging.debug(bar['time'])
         except StopIteration:
             try:
                 logging.debug('fetch from service')

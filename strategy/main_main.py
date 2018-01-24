@@ -5,17 +5,18 @@ import zipfile
 
 import backtrader as bt
 import pycommon
-from gevent import os
+import os
 from test_data_source import TestDataSource
+import tempfile
 
 zip_ref = zipfile.ZipFile('strategy.zip', 'r')
-import tempfile
 
 folder = tempfile.mkdtemp()
 zip_ref.extractall(folder)
 zip_ref.close()
 
 sys.path.append(folder)
+print(folder)
 
 
 def init_log():
@@ -30,7 +31,7 @@ init_log()
 
 def load_plugins():
     py_search_re = re.compile('^' + 'strategy' + '.py$', re.IGNORECASE)
-    plugin_files = filter(py_search_re.search, os.listdir(folder + "/strategy"))
+    plugin_files =list( filter(py_search_re.search, os.listdir(folder + "/strategy")))
     form_module = lambda fp: '.' + os.path.splitext(fp)[0]
     plugins = list(map(form_module, plugin_files))
     # import parent module namespace
@@ -59,6 +60,6 @@ if __name__ == '__main__':
     cerebro.run()
 
     pycommon.logging.debug('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-    cerebro.plot()
+    # cerebro.plot()
 
 print(folder)
