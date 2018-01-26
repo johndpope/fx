@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; py-indent-offset:4 -*-
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (absolute_import, division, print_function, unicode_literals)
 
 import datetime as dt
 import logging
@@ -14,16 +13,20 @@ from fxclient.endpoints.stream_candle_request import StreamCandleRequest
 
 
 class LiveDataSource(feed.DataBase):
-    def haslivedata(self):
-        return True
-
-    def islive(self):
-        return True
+    """
+    Lớp lấy dữ liệu realtime từ fx service
+    """
 
     def __init__(self):
         self.temp_arr = iter([])
         self.client = FxAPI('http://172.104.110.189:9000')
         self.generator = self.client.request(StreamCandleRequest())
+
+    def haslivedata(self):
+        return True
+
+    def islive(self):
+        return True
 
     def start(self):
         super(LiveDataSource, self).start()

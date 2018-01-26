@@ -8,4 +8,3 @@ services:
     env_file:
       - /opt/projects/fx/env.env
     restart: always
-#    container_name: "strategy"

@@ -5,15 +5,21 @@ import re
 import sys
 import tempfile
 import zipfile
-
+import os
 import backtrader as bt
 import pycommon
 from kazoo.client import KazooClient
-from test_data_source import TestDataSource
+from fxclient.data.test_data_source import TestDataSource
 
-if 'ZkServer' not in os.environ or 'ZkBasePath' not in os.environ:
-    os.environ['ZkServer'] = '172.104.110.189:2181'
-    os.environ['ZkBasePath'] = 'fx.dev'
+
+def init_default():
+    if 'ZkServer' not in os.environ:
+        os.environ['ZkServer'] = '172.104.110.189:2181'
+
+    if 'ZkBasePath' not in os.environ:
+        os.environ['ZkBasePath'] = 'fx.dev'
+
+init_default()
 
 zk = KazooClient(hosts=os.environ['ZkServer'])
 zk.start()
@@ -68,7 +74,6 @@ def run_stategy(strategy_zip_file):
 
 
 init_log()
-import os
 
 
 def process_node(path, new_worker, data):
