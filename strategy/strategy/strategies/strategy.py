@@ -14,6 +14,8 @@ init_log()
 
 
 class Strategy(bt.Strategy):
+    params = (('trade_volume', 100),
+              ('close_bar', 150))
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.date(0)
@@ -24,7 +26,8 @@ class Strategy(bt.Strategy):
         self.order = None
         self.buyprice = None
         self.buycomm = 5000
-        self.c = True
+        self.trade_volume = 100
+        self.close_bar = 100
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -75,17 +78,17 @@ class Strategy(bt.Strategy):
                     self.log('BUY CREATE, %.2f' % self.dataclose[0])
 
                     # Keep track of the created order to avoid a 2nd order
-                    self.order = self.buy(size=500)
+                    self.order = self.buy(size=self.trade_volume)
 
         else:
 
             # Already in the market ... we might sell
-            if len(self) >= (self.bar_executed + 500):
+            if len(self) >= (self.bar_executed + self.close_bar):
                 # SELL, SELL, SELL!!! (with all possible default parameters)
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
                 # Keep track of the created order to avoid a 2nd order
-                self.order = self.sell(size=500)
+                self.order = self.sell(size=self.trade_volume)
 
 
 def getStrategy():

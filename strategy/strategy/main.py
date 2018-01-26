@@ -6,34 +6,52 @@ import logging
 import backtrader as bt
 import pycommon
 
-from live_data_source import LiveDataSource
-from test_data_source import TestDataSource
+from fxclient.data.live_data_source import LiveDataSource
+from fxclient.data.test_data_source import TestDataSource
+from fxclient.data.test_data_source_list import TestDataSourceList
 
-from strategy import TestStrategy
-
+from strategies.strategy import Strategy
 
 
 def init_log():
+    logging.getLogger("root").setLevel(logging.ERROR)
+
     logger = pycommon.LogBuilder()
-    logger.init_rotating_file_handler("/var/log/fxservice")
+    logger.init_rotating_file_handler("/var/log/strategy")
     logger.init_stream_handler()
     logger.build()
+
 
 init_log()
 
 if __name__ == '__main__':
     cerebro = bt.Cerebro()
 
-    cerebro.addstrategy(TestStrategy)
+    # cerebro.addstrategy(Strategy)
+    cerebro.optstrategy(
+        Strategy,
+        trade_volume=[100],
+        close_bar=[150]
 
-    data = TestDataSource('2017-01-01T10:38:00Z', "2017-01-30T10:38:00Z")
+    )
+
+    data = TestDataSourceList('2017-01-01T10:38:00Z', "2017-01-05T10:38:00Z")
     # data = LiveDataSource()
     cerebro.adddata(data)
     cerebro.broker.setcash(2000)
     from matplotlib.dates import *
 
-    cerebro.run()
+    # Run over everything
+    stratruns = cerebro.run()
 
+    print('==================================================')
+    for stratrun in stratruns:
+        print('**************************************************')
+        for strat in stratrun:
+            print('--------------------------------------------------')
+            print(str(strat.p._getkwargs())  )
 
-    logging.debug('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-    cerebro.plot()
+    print('==================================================')
+
+    # logging.debug('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+    # cerebro.plot()

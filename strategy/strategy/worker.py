@@ -10,31 +10,38 @@ import backtrader as bt
 import pycommon
 from kazoo.client import KazooClient
 from fxclient.data.test_data_source import TestDataSource
+import time
 
 
 def init_default():
+    """
+    Đặt các biến môi trường mặc định
+    :return:
+    """
     if 'ZkServer' not in os.environ:
         os.environ['ZkServer'] = '172.104.110.189:2181'
 
     if 'ZkBasePath' not in os.environ:
         os.environ['ZkBasePath'] = 'fx.dev'
 
-init_default()
-
-zk = KazooClient(hosts=os.environ['ZkServer'])
-zk.start()
-monitor_path = os.path.join(os.environ['ZkBasePath'], "tasks")
-
-logging.getLogger("kazoo.client").setLevel(logging.ERROR)
-
 
 def init_log():
+    """
+    Init log
+    :return:
+    """
+    logging.getLogger("kazoo.client").setLevel(logging.ERROR)
+
     logger = pycommon.LogBuilder()
     logger.init_stream_handler(level=logging.INFO)
     logger.build()
 
 
-def run_stategy(strategy_zip_file):
+def run_strategy(strategy_zip_file):
+    """
+    Chạy 1 strategy ở dạng zip file
+    :param strategy_zip_file:
+    """
     zip_ref = zipfile.ZipFile(strategy_zip_file, 'r')
     folder = tempfile.mkdtemp()
     zip_ref.extractall(folder)
@@ -73,38 +80,56 @@ def run_stategy(strategy_zip_file):
     # cerebro.plot()
 
 
-init_log()
-
-
 def process_node(path, new_worker, data):
-    pycommon.logging.info("Working {} on process {}:".format(work_node, os.getpid()))
+    """
+    Xử lý một node
+    :param path: Đường dẫn node cần xử lý
+    :param new_worker: Tên workder xử lý
+    :param data: Dữ liệu dạng zip
+    :return:
+    """
+    logging.info("Working {} on process {}:".format(new_worker, os.getpid()))
 
     file = tempfile.mktemp()
     with open(file, 'wb') as f:
         f.write(data)
-    value = run_stategy(file)
+    value = run_strategy(file)
     result = os.path.join(path, 'result')
     zk.create(result, str(value).encode(), ephemeral=False)
     zk.delete(new_worker)
 
 
-while True:
-    monitor_path = os.path.join(os.environ['ZkBasePath'], "tasks")
-    lock = zk.Lock(os.path.join(os.environ['ZkBasePath'], "lock"), "worker")
-    work_node, worker_node = None, None
-    with lock:  # blocks waiting for lock acquisition
-        children = zk.get_children(monitor_path)
-        for v in children:
-            worker = zk.get_children(os.path.join(monitor_path, v))
-            if len(worker) == 0:  # execute worker
-                new_worker = zk.create(os.path.join(monitor_path, v, str(os.getpid())), ephemeral=True)
-                work_node = os.path.join(monitor_path, v)
-                worker_node = new_worker
-                break
-        import time
-    if not work_node:
-        time.sleep(5)
-        pycommon.logging.info("No task found")
-    if work_node:
-        data, start = zk.get(work_node)
-        process_node(work_node, new_worker, data)
+def main():
+    """
+    Vòng lặp vô hạn để luôn kiểm tra và thực thi task nếu có
+    :return:
+    """
+    while True:
+        tasks_path = os.path.join(os.environ['ZkBasePath'], "tasks")
+        lock = zk.Lock(os.path.join(os.environ['ZkBasePath'], "lock"), "worker")
+        working_node, worker_node = None, None
+        with lock:  # blocks waiting for lock acquisition
+            children = zk.get_children(tasks_path)
+            for v in children:
+                worker = zk.get_children(os.path.join(tasks_path, v))
+                if len(worker) == 0:  # execute worker
+                    worker_node = zk.create(os.path.join(tasks_path, v, str(os.getpid())), ephemeral=True)
+                    working_node = os.path.join(tasks_path, v)
+                    break
+
+        if not working_node:
+            time.sleep(5)
+            pycommon.logging.info("No task found")
+        else:
+            data, start = zk.get(working_node)
+            process_node(working_node, worker_node, data)
+
+
+if __name__ == "__main__":
+    init_log()
+    init_default()
+
+    zk = KazooClient(hosts=os.environ['ZkServer'])
+    zk.start()
+
+    main()
