@@ -1,16 +1,19 @@
+import base64
 import importlib
 import logging
 import os
 import re
 import sys
 import tempfile
+import time
 import zipfile
-import os
+
 import backtrader as bt
 import pycommon
+from fxclient.data.test_data_source_list import TestDataSourceList
 from kazoo.client import KazooClient
-from fxclient.data.test_data_source import TestDataSource
-import time
+
+from storage import MongoDatabase
 
 
 def init_default():
@@ -22,7 +25,7 @@ def init_default():
         os.environ['ZkServer'] = '172.104.110.189:2181'
 
     if 'ZkBasePath' not in os.environ:
-        os.environ['ZkBasePath'] = 'fx.dev'
+        os.environ['ZkBasePath'] = 'fx.dev1'
 
 
 def init_log():
@@ -69,15 +72,25 @@ def run_strategy(strategy_zip_file):
 
     cerebro = bt.Cerebro()
     cerebro.addstrategy(m.getStrategy())
-    data = TestDataSource('2017-01-01T10:38:00Z', "2017-01-30T10:38:00Z")
+    # data = TestDataSource('2017-01-01T10:38:00Z', "2017-01-30T10:38:00Z")
+    data = TestDataSourceList('2017-01-01T10:38:00Z', "2017-01-05T10:38:00Z")
+
     cerebro.adddata(data)
     cerebro.broker.setcash(2000)
 
     cerebro.run()
 
-    pycommon.logging.debug('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
     return cerebro.broker.getvalue()
-    # cerebro.plot()
+
+
+def save_to_db(function, zip):
+    result = function(zip)
+    storage_data = MongoDatabase()
+    with open(zip, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+        storage_data.save_item({"zip_file": encoded_string, "total_value": str(result)})
+
+    # print(zip + " " + str(result))
 
 
 def process_node(path, new_worker, data):
@@ -93,10 +106,10 @@ def process_node(path, new_worker, data):
     file = tempfile.mktemp()
     with open(file, 'wb') as f:
         f.write(data)
-    value = run_strategy(file)
-    result = os.path.join(path, 'result')
-    zk.create(result, str(value).encode(), ephemeral=False)
-    zk.delete(new_worker)
+    save_to_db(run_strategy, file)
+    # result = os.path.join(path, 'result')
+    # zk.create(result, str(value).encode(), ephemeral=False)
+    zk.delete(path, recursive=True)
 
 
 def main():
@@ -111,11 +124,14 @@ def main():
         with lock:  # blocks waiting for lock acquisition
             children = zk.get_children(tasks_path)
             for v in children:
-                worker = zk.get_children(os.path.join(tasks_path, v))
-                if len(worker) == 0:  # execute worker
-                    worker_node = zk.create(os.path.join(tasks_path, v, str(os.getpid())), ephemeral=True)
-                    working_node = os.path.join(tasks_path, v)
-                    break
+                try:
+                    worker = zk.get_children(os.path.join(tasks_path, v))
+                    if len(worker) == 0:  # execute worker
+                        worker_node = zk.create(os.path.join(tasks_path, v, str(os.getpid())), ephemeral=True)
+                        working_node = os.path.join(tasks_path, v)
+                        break
+                except:
+                    pass
 
         if not working_node:
             time.sleep(5)
@@ -128,7 +144,9 @@ def main():
 if __name__ == "__main__":
     init_log()
     init_default()
-
+    # logging.info(save_to_db(run_strategy, '/opt/projects/fx/strategy/strategy/strategy.zip'))
+    #
+    # exit()
     zk = KazooClient(hosts=os.environ['ZkServer'])
     zk.start()
 

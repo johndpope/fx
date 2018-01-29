@@ -8,3 +8,9 @@ services:
     env_file:
       - /opt/projects/fx/env.env
     restart: always
+
+
+networks:
+  default:
+    external:
+      name: fxservice_default

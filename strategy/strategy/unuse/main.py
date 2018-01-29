@@ -2,14 +2,13 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import logging
+import pickle
 
 import backtrader as bt
 import pycommon
-
 from fxclient.data.live_data_source import LiveDataSource
 from fxclient.data.test_data_source import TestDataSource
 from fxclient.data.test_data_source_list import TestDataSourceList
-
 from strategies.strategy import Strategy
 
 
@@ -31,12 +30,12 @@ if __name__ == '__main__':
     cerebro.optstrategy(
         Strategy,
         trade_volume=[100],
-        close_bar=[150,200,250,500]
-
+        close_bar=[150, 200, 250, 500]
     )
 
     data = TestDataSourceList('2017-01-01T10:38:00Z', "2017-01-05T10:38:00Z")
     # data = LiveDataSource()
+    
     cerebro.adddata(data)
     cerebro.broker.setcash(10000)
     from matplotlib.dates import *
@@ -44,14 +43,21 @@ if __name__ == '__main__':
     # Run over everything
     stratruns = cerebro.run()
 
+    try:
+        pickle_file_path = "/tmp/strategt.zip"
+        pickle.dump(cerebro, open(pickle_file_path, "wb"))
+        logging.debug("Successfully pickled cerebro instance to file (%s)!" % pickle_file_path)
+    except:
+        logging.exception("Failed to pickle cerebro instance to file (%s)" % pickle_file_path)
+
     print('==================================================')
     for stratrun in stratruns:
         print('**************************************************')
         for strat in stratrun:
             print('--------------------------------------------------')
-            print(str(strat.p._getkwargs())  )
+            print(str(strat.p._getkwargs()))
 
     print('==================================================')
 
-    # logging.debug('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-    # cerebro.plot()
+    logging.debug('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+    cerebro.plot()

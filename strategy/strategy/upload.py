@@ -9,6 +9,7 @@ def init_default():
 
     if 'ZkBasePath' not in os.environ:
         os.environ['ZkBasePath'] = 'fx.dev1'
+
 init_default()
 
 zk = KazooClient(hosts=os.environ['ZkServer'])
@@ -32,7 +33,7 @@ def upload_task(path=__file__):
     :return:
     """
     for v in [x for x in os.listdir(os.path.dirname(path)) if x.endswith(".zip")]:
-        for l in range(0, 10):
+        for l in range(0, 5000):
             with open(v, 'rb') as f:
                 full_path = os.path.join(monitor_path, v) + '_' + str(l)
                 if zk.exists(full_path):
@@ -40,4 +41,4 @@ def upload_task(path=__file__):
                 print('upload:' + full_path)
                 zk.create(full_path, f.read(), ephemeral=False, makepath=True)
 
-# upload_task()
+upload_task()

@@ -1,0 +1,20 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo:latest
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /botdata/mongodb:/data/db
+    command: mongod
+
+
+networks:
+  default:
+    external:
+      name: fxservice_default
