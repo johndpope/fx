@@ -30,6 +30,7 @@ def init_default():
 
 
 
+
 def init_log():
     """
     Init log
