@@ -28,6 +28,8 @@ def init_default():
         os.environ['ZkBasePath'] = 'fx.dev1'
 
 
+
+
 def init_log():
     """
     Init log
